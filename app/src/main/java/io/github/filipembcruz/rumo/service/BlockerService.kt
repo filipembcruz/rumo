@@ -34,7 +34,7 @@ object Interventions {
             .putExtra(InterventionActivity.EXTRA_TARGET, d.target)
             .putExtra(InterventionActivity.EXTRA_PKG, pkg)
             .putExtra(InterventionActivity.EXTRA_USED, d.usedMs)
-            .putExtra(InterventionActivity.EXTRA_LIMIT, d.limit?.minutes ?: 0)
+            .putExtra(InterventionActivity.EXTRA_LIMIT, d.limit?.todayMinutes ?: 0)
             .putExtra(InterventionActivity.EXTRA_SCHEDULE, d.schedule?.name ?: "")
         runCatching { context.startActivity(intent) }
     }

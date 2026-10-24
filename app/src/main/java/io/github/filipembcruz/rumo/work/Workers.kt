@@ -70,13 +70,13 @@ class RumoWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val s = Notifier.strings(ctx)
         for (st in Repo.limitStatuses(ctx)) {
             val l = st.limit
-            if (!l.enabled) continue
+            if (!l.active) continue
             val name = when (l.kind) {
                 TargetKind.APP -> AppNames.label(ctx, l.target)
                 TargetKind.SITE -> l.target
                 TargetKind.CATEGORY -> s.cat(Cat.of(l.target))
             }
-            val limitMs = l.minutes * 60_000L
+            val limitMs = l.todayMs
             val id = 1000 + (l.id % 500).toInt()
             if (st.usedMs >= limitMs) {
                 if (prefs.markOnce("l100:${l.id}")) Notifier.post(ctx, Notifier.CH_LIMITS, id, s.nLimitReachedT(name), s.nLimitReachedB(Fmt.dur(limitMs), false))

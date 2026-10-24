@@ -20,6 +20,11 @@ class Db private constructor(context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion >= 2) {
+            // v3: per-weekday limits. Keep all existing data.
+            if (oldVersion < 3) db.execSQL("ALTER TABLE limits ADD COLUMN days TEXT")
+            return
+        }
         listOf("usage", "daily", "hourly", "web", "limits", "schedules", "focus", "activity", "goals", "overrides", "pause_apps")
             .forEach { db.execSQL("DROP TABLE IF EXISTS $it") }
         onCreate(db)
@@ -132,10 +137,11 @@ class Db private constructor(context: Context) :
     fun hasAnyWeb(): Boolean = q("SELECT 1 FROM web LIMIT 1") { it.moveToFirst() }
 
     // ------------------------------------------------------------------ limits
-    fun limits(): List<Limit> = q("SELECT id, kind, target, minutes, block, enabled FROM limits ORDER BY id") { c ->
+    fun limits(): List<Limit> = q("SELECT id, kind, target, minutes, block, enabled, days FROM limits ORDER BY id") { c ->
         buildList {
             while (c.moveToNext()) add(
-                Limit(c.getLong(0), TargetKind.of(c.getString(1)), c.getString(2), c.getInt(3), c.getInt(4) == 1, c.getInt(5) == 1)
+                Limit(c.getLong(0), TargetKind.of(c.getString(1)), c.getString(2), c.getInt(3), c.getInt(4) == 1, c.getInt(5) == 1,
+                    c.getString(6)?.split(",")?.mapNotNull { it.trim().toIntOrNull() }?.takeIf { it.size == 7 })
             )
         }
     }
@@ -144,6 +150,7 @@ class Db private constructor(context: Context) :
         val cv = ContentValues().apply {
             put("kind", l.kind.id); put("target", l.target); put("minutes", l.minutes)
             put("block", if (l.block) 1 else 0); put("enabled", if (l.enabled) 1 else 0)
+            if (l.days != null) put("days", l.days.joinToString(",")) else putNull("days")
         }
         val db = writableDatabase
         return if (l.id > 0) { db.update("limits", cv, "id = ?", arrayOf(l.id.toString())); l.id }
@@ -314,13 +321,13 @@ class Db private constructor(context: Context) :
     }
 
     companion object {
-        private const val VERSION = 2
+        private const val VERSION = 3
         private val TABLES = listOf(
             "CREATE TABLE usage (day TEXT NOT NULL, pkg TEXT NOT NULL, ms INTEGER NOT NULL, opens INTEGER NOT NULL, PRIMARY KEY(day, pkg))",
             "CREATE TABLE hourly (day TEXT NOT NULL, hour INTEGER NOT NULL, pkg TEXT NOT NULL, ms INTEGER NOT NULL, PRIMARY KEY(day, hour, pkg))",
             "CREATE TABLE daily (day TEXT PRIMARY KEY, unlocks INTEGER NOT NULL, first_use INTEGER NOT NULL DEFAULT 0)",
             "CREATE TABLE web (day TEXT NOT NULL, domain TEXT NOT NULL, ms INTEGER NOT NULL, visits INTEGER NOT NULL, PRIMARY KEY(day, domain))",
-            "CREATE TABLE limits (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, target TEXT NOT NULL, minutes INTEGER NOT NULL, block INTEGER NOT NULL, enabled INTEGER NOT NULL DEFAULT 1)",
+            "CREATE TABLE limits (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, target TEXT NOT NULL, minutes INTEGER NOT NULL, block INTEGER NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, days TEXT)",
             "CREATE TABLE schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, start_min INTEGER NOT NULL, end_min INTEGER NOT NULL, days INTEGER NOT NULL, cats TEXT NOT NULL, apps TEXT NOT NULL, enabled INTEGER NOT NULL, icon TEXT)",
             "CREATE TABLE focus (id INTEGER PRIMARY KEY AUTOINCREMENT, start INTEGER NOT NULL, end INTEGER NOT NULL, planned_min INTEGER NOT NULL, completed INTEGER NOT NULL, goal_id INTEGER)",
             "CREATE TABLE activity (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, goal_id INTEGER, label TEXT NOT NULL, minutes INTEGER NOT NULL, ts INTEGER NOT NULL)",

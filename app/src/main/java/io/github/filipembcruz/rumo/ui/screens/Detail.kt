@@ -189,14 +189,14 @@ fun DetailScreen(
                     Column(Modifier.weight(1f)) {
                         Text(s.dailyLimit, style = MaterialTheme.typography.titleMedium, color = c.text)
                         Text(
-                            m.limit?.let { "${Fmt.dur(it.minutes * 60_000L)} · ${if (it.block) s.blocksWhenReached else s.alertsOnly}" } ?: s.noLimit,
+                            m.limit?.let { (if (it.todayMinutes > 0) Fmt.dur(it.todayMs) else s.noLimitToday) + (if (it.days != null) " · ${s.variesByDay}" else "") + " · ${if (it.block) s.blocksWhenReached else s.alertsOnly}" } ?: s.noLimit,
                             style = MaterialTheme.typography.bodySmall, color = c.muted,
                         )
                     }
                 }
                 m.limit?.let {
                     Spacer(Modifier.height(12.dp))
-                    val f = m.today.toFloat() / (it.minutes * 60_000f)
+                    val f = if (it.todayMinutes > 0) m.today.toFloat() / it.todayMs else 0f
                     ProgressLine(f, if (f >= 1f) c.coral else if (f >= 0.8f) c.amber else c.mint)
                 }
                 Spacer(Modifier.height(14.dp))

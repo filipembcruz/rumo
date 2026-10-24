@@ -509,11 +509,11 @@ fun LimitRow(st: LimitStatus, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Row {
                 Text(name, style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${Fmt.dur(st.usedMs)} / ${Fmt.dur(l.minutes * 60_000L)}", style = MaterialTheme.typography.labelMedium, color = col)
+                Text(if (l.todayMinutes > 0) "${Fmt.dur(st.usedMs)} / ${Fmt.dur(l.todayMs)}" else "${Fmt.dur(st.usedMs)} · ${s.noLimitToday}", style = MaterialTheme.typography.labelMedium, color = if (l.todayMinutes > 0) col else c.muted)
             }
             Spacer(Modifier.height(6.dp))
             ProgressLine(f, col, height = 6.dp)
-            Text(if (l.block) s.blocksWhenReached else s.alertsOnly, style = MaterialTheme.typography.labelSmall, color = c.muted,
+            Text((if (l.block) s.blocksWhenReached else s.alertsOnly) + if (l.days != null) " · ${s.variesByDay}" else "", style = MaterialTheme.typography.labelSmall, color = c.muted,
                 modifier = Modifier.padding(top = 3.dp))
         }
     }

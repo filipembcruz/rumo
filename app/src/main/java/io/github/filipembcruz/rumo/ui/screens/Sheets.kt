@@ -3,6 +3,7 @@
 package io.github.filipembcruz.rumo.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -236,9 +237,9 @@ fun LimitSheetRoute(kind: TargetKind, id: String, onDone: () -> Unit) {
         Db.get(context).limits().firstOrNull { it.kind == kind && it.target == id } to Repo.usedToday(context, kind, id)
     } ?: return
     LimitSheet(kind, id, data.first, data.second, onDismiss = onDone,
-        onSave = { min, block ->
+        onSave = { min, block, days ->
             scope.launch {
-                withContext(Dispatchers.IO) { Actions.saveLimit(context, Limit(data.first?.id ?: 0, kind, id, min, block)) }
+                withContext(Dispatchers.IO) { Actions.saveLimit(context, Limit(data.first?.id ?: 0, kind, id, min, block, days = days)) }
                 onDone()
             }
         },
@@ -247,16 +248,32 @@ fun LimitSheetRoute(kind: TargetKind, id: String, onDone: () -> Unit) {
 
 @Composable
 fun LimitSheet(kind: TargetKind, id: String, existing: Limit?, usedToday: Long, onDismiss: () -> Unit,
-               onSave: (Int, Boolean) -> Unit, onDelete: (Long) -> Unit) {
+               onSave: (Int, Boolean, List<Int>?) -> Unit, onDelete: (Long) -> Unit) {
     val s = LocalStrings.current
     val c = R2.colors
     val context = LocalContext.current
-    var minutes by remember { mutableFloatStateOf((existing?.minutes ?: 60).toFloat()) }
+    val base = existing?.minutes ?: 60
+    var byDay by remember { mutableStateOf(existing?.days != null) }
+    var minutes by remember { mutableFloatStateOf(base.toFloat()) }
+    val perDay = remember { androidx.compose.runtime.mutableStateListOf<Int>().apply { addAll(existing?.days ?: List(7) { base }) } }
+    val todayIdx = java.time.LocalDate.now().dayOfWeek.value - 1
+    var selected by remember { mutableStateOf(setOf(todayIdx)) }
     var block by remember { mutableStateOf(existing?.block ?: true) }
     val name = when (kind) {
         TargetKind.APP -> remember(id) { AppNames.label(context, id) }
         TargetKind.SITE -> id
         TargetKind.CATEGORY -> s.cat(Cat.of(id))
+    }
+    // value shown/edited: the common value of the selected days (or the single value)
+    val selValues = selected.map { perDay[it] }.distinct()
+    val editValue = if (byDay) (selValues.singleOrNull() ?: selValues.maxOrNull() ?: 0) else minutes.toInt()
+    fun setValue(v: Int) {
+        if (byDay) selected.forEach { perDay[it] = v } else minutes = v.toFloat()
+    }
+    val headline = when {
+        !byDay -> Fmt.dur(minutes.toLong() * 60_000L)
+        editValue == 0 -> s.noLimitChip
+        else -> Fmt.dur(editValue * 60_000L)
     }
     RumoSheet(onDismiss, s.dailyLimitFor(name)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -268,14 +285,62 @@ fun LimitSheet(kind: TargetKind, id: String, existing: Limit?, usedToday: Long, 
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text(Fmt.dur(minutes.toLong() * 60_000L), style = MaterialTheme.typography.displaySmall, color = c.text)
+                Text(headline, style = MaterialTheme.typography.displaySmall, color = c.text)
                 Text(s.usedTodaySoFar(Fmt.dur(usedToday)), style = MaterialTheme.typography.bodySmall, color = c.muted)
             }
         }
+        Spacer(Modifier.height(14.dp))
+        Segmented(listOf(s.sameEveryDay, s.customByDay), if (byDay) 1 else 0, {
+            val nowByDay = it == 1
+            if (nowByDay && !byDay) { for (i in 0 until 7) perDay[i] = minutes.toInt() }
+            if (!nowByDay && byDay) { minutes = (perDay[todayIdx].takeIf { v -> v > 0 } ?: perDay.maxOrNull()?.takeIf { v -> v > 0 } ?: 60).toFloat() }
+            byDay = nowByDay
+        })
+        if (byDay) {
+            Spacer(Modifier.height(14.dp))
+            // 7 day columns: letter + value; tap toggles selection
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                for (i in 0 until 7) {
+                    val sel = i in selected
+                    val bg by androidx.compose.animation.animateColorAsState(if (sel) c.primary else c.surface, label = "daybg")
+                    val fg = if (sel) androidx.compose.ui.graphics.Color.White else c.text
+                    Column(
+                        Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(bg)
+                            .border(1.dp, if (sel) androidx.compose.ui.graphics.Color.Transparent else c.outline, RoundedCornerShape(14.dp))
+                            .bounceClick {
+                                selected = if (sel) (selected - i).ifEmpty { setOf(i) } else selected + i
+                            }
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(s.weekdayLetters[i], style = MaterialTheme.typography.labelLarge, color = fg)
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            if (perDay[i] == 0) "–" else Fmt.dur(perDay[i] * 60_000L),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (sel) fg.copy(alpha = 0.85f) else if (i == todayIdx) c.primary else c.muted,
+                            maxLines = 1,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    s.weekdaysChip to setOf(0, 1, 2, 3, 4),
+                    s.weekendChip to setOf(5, 6),
+                    s.friSunChip to setOf(4, 5, 6),
+                    s.everyDayChip to (0..6).toSet(),
+                ).forEach { (label, set) -> SelectChip(label, selected == set, { selected = set }) }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(s.pickDaysHint, style = MaterialTheme.typography.bodySmall, color = c.muted)
+        }
         Spacer(Modifier.height(8.dp))
-        Slider(minutes, { minutes = (it / 5f).toInt().coerceAtLeast(1) * 5f }, valueRange = 5f..300f, colors = sliderColors())
+        Slider(editValue.coerceIn(5, 300).toFloat(), { setValue((it / 5f).toInt().coerceAtLeast(1) * 5) }, valueRange = 5f..300f, colors = sliderColors())
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(15, 30, 60, 90, 120, 180).forEach { v -> SelectChip(Fmt.dur(v * 60_000L), minutes.toInt() == v, { minutes = v.toFloat() }) }
+            listOf(15, 30, 60, 90, 120, 180).forEach { v -> SelectChip(Fmt.dur(v * 60_000L), editValue == v, { setValue(v) }) }
+            if (byDay) SelectChip(s.noLimitChip, editValue == 0, { setValue(0) }, accent = c.muted)
         }
         Spacer(Modifier.height(18.dp))
         Text(s.whenReached, style = MaterialTheme.typography.titleSmall, color = c.text)
@@ -284,7 +349,13 @@ fun LimitSheet(kind: TargetKind, id: String, existing: Limit?, usedToday: Long, 
         Spacer(Modifier.height(6.dp))
         Text(if (block) s.blockItSub else s.alertMeSub, style = MaterialTheme.typography.bodySmall, color = c.muted)
         Spacer(Modifier.height(20.dp))
-        PrimaryButton(s.save, Modifier.fillMaxWidth(), Icons.Rounded.Check) { onSave(minutes.toInt(), block) }
+        PrimaryButton(s.save, Modifier.fillMaxWidth(), Icons.Rounded.Check) {
+            if (byDay) {
+                val days = perDay.toList()
+                if (days.distinct().size == 1 && days[0] > 0) onSave(days[0], block, null)
+                else onSave(days.filter { it > 0 }.maxOrNull() ?: 60, block, days)
+            } else onSave(minutes.toInt(), block, null)
+        }
         if (existing != null) GhostButton(s.removeLimit, Modifier.fillMaxWidth(), c.coral) { onDelete(existing.id) }
     }
 }

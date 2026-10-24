@@ -104,13 +104,13 @@ data class WidgetData(
                         Color(a.cat.color), a.ms.toFloat() / maxA)
                 },
                 sites = sites.map { st -> WidgetRow(st.domain.removePrefix("www."), st.ms, null, Color(st.cat.color), st.ms.toFloat() / maxS) },
-                limits = m.limits.sortedByDescending { it.fraction }.take(3).map { ls ->
+                limits = m.limits.filter { it.limit.active }.sortedByDescending { it.fraction }.take(3).map { ls ->
                     val name = when (ls.limit.kind) {
                         TargetKind.APP -> AppNames.label(context, ls.limit.target)
                         TargetKind.SITE -> ls.limit.target
                         TargetKind.CATEGORY -> s.cat(Cat.of(ls.limit.target))
                     }
-                    val lim = ls.limit.minutes * 60_000L
+                    val lim = ls.limit.todayMs
                     val f = if (lim > 0) ls.usedMs.toFloat() / lim else 0f
                     WidgetLimit(name, ls.usedMs, lim, miniRing(f, 96))
                 },

@@ -81,7 +81,7 @@ object Rules {
         }
         // 3. limits that block
         for (l in db.limits()) {
-            if (!l.enabled || !l.block) continue
+            if (!l.active || !l.block) continue
             val matches = when (l.kind) {
                 TargetKind.APP -> l.target == pkg
                 TargetKind.SITE -> domain != null && (domain == l.target || domain.endsWith(".${l.target}"))
@@ -90,7 +90,7 @@ object Rules {
             if (!matches) continue
             if (prefs.passUntil("extra:${l.kind.id}:${l.target}") > now) continue
             val used = used(context, l, appToday, siteToday)
-            if (used >= l.minutes * 60_000L) {
+            if (used >= l.todayMs) {
                 return Decision(BlockReason.LIMIT, l.kind, l.target, l, used)
             }
         }

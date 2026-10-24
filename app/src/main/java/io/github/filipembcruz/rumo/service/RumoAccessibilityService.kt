@@ -180,9 +180,9 @@ class RumoAccessibilityService : AccessibilityService() {
         val sites = siteToday()
         val s = Notifier.strings(this)
         for (l in Db.get(this).limits()) {
-            if (!l.enabled) continue
+            if (!l.active) continue
             val used = Rules.used(this, l, apps, sites)
-            val limitMs = l.minutes * 60_000L
+            val limitMs = l.todayMs
             val name = when (l.kind) {
                 TargetKind.APP -> AppNames.label(this, l.target)
                 TargetKind.SITE -> l.target

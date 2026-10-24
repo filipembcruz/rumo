@@ -14,7 +14,15 @@ data class Limit(
     val minutes: Int,
     val block: Boolean,
     val enabled: Boolean = true,
-)
+    /** Optional minutes per weekday, Monday..Sunday; 0 = no limit that day. Null = [minutes] every day. */
+    val days: List<Int>? = null,
+) {
+    fun minutesOn(d: java.time.DayOfWeek): Int = days?.getOrNull(d.value - 1) ?: minutes
+    /** Today's limit in minutes (0 = no limit today). */
+    val todayMinutes: Int get() = minutesOn(LocalDate.now().dayOfWeek)
+    val todayMs: Long get() = todayMinutes * 60_000L
+    val active: Boolean get() = enabled && todayMinutes > 0
+}
 
 data class Schedule(
     val id: Long,
@@ -92,7 +100,7 @@ data class TodayModel(
 data class BatteryUi(val startMs: Long, val startLevel: Int, val level: Int, val shares: Map<String, Float>)
 
 data class LimitStatus(val limit: Limit, val usedMs: Long) {
-    val fraction: Float get() = if (limit.minutes <= 0) 0f else usedMs / (limit.minutes * 60_000f)
+    val fraction: Float get() = if (limit.todayMinutes <= 0) 0f else usedMs / (limit.todayMinutes * 60_000f)
 }
 
 enum class Range { DAY, WEEK, MONTH, YEAR, CUSTOM }

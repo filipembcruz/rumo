@@ -176,5 +176,12 @@ class ScreenshotTest {
         InterventionScreen(BlockReason.LIMIT, TargetKind.APP, "com.instagram.android", "com.instagram.android", 92 * M, 90, "", 34,
             "Learn Spanish", false, 8, 0, {}, {}, {}, true, {})
     }
+    @Test fun limitByDay() = shot("12_limit_by_day") {
+        io.github.filipembcruz.rumo.ui.screens.LimitSheet(
+            TargetKind.APP, "com.instagram.android",
+            Limit(1, TargetKind.APP, "com.instagram.android", 120, true, days = listOf(30, 30, 30, 30, 120, 180, 180)),
+            42 * M, {}, { _, _, _ -> }, {},
+        )
+    }
     @Test fun focusDark() = shot("11_focus_dark", dark = true) { FocusScreen(Sample.focus, FocusActions()) }
 }
