@@ -47,14 +47,14 @@ Android's built-in Digital Wellbeing tells you that you spent 3 hours in *Brave*
 
 ### 📊 Know where your time goes
 - **Screen time per app**, with opens, average session, first pickup of the day and unlocks.
-- **Screen time per website** inside Brave, Chrome, Firefox, Edge, Samsung Internet, Opera, DuckDuckGo and more.
+- **Screen time per website**, with each site's icon, inside Brave, Chrome, Firefox, Edge, Samsung Internet, Opera, DuckDuckGo and more.
 - **Categories** for apps and sites (social, video, games, learning, productivity…) — change any of them with a tap.
 - **Insights** by day, week, month, year or a custom range: animated bar charts with your daily goal line, donut by category, hour-by-weekday heatmap, averages by hour and weekday, longest day, change vs the previous period.
 - **Focus score** (0–100) from your goal, balance and pickups.
 - **Battery estimate** per app for the current charge.
 
 ### 🛡️ Take control
-- **Daily limits** per app, website or whole category — alert at 80% and 100%, or **block** when time is up (with an optional "5 more minutes").
+- **Daily limits** per app, website or whole category, the same every day or **different per weekday** (e.g. more time Fri–Sun) — alert at 80% and 100%, or **block** when time is up (with an optional "5 more minutes").
 - **Focus sessions** with a countdown ring; distracting apps and sites are blocked. **Strict mode** requires holding to end.
 - **Schedules** like *Bedtime* or *Work hours* that block chosen categories automatically.
 - **Mindful pause**: a breathing screen before opening the apps you pick, showing how many times you opened them today.
@@ -98,6 +98,7 @@ Prefer not to? Use **"Display over other apps"** instead: limits, focus, schedul
 - **No account, no servers, no ads, no analytics.** Everything is stored only on your phone.
 - The accessibility service reads **only which app is on screen and the browser's address bar**. Rumo never reads what you type, your messages or passwords.
 - A quiet notification shows while website tracking is active (you can hide it).
+- **Website icons** are downloaded directly from the sites you visit (never through a third-party service) and cached on the phone. Turn them off in **Settings → Lists** and Rumo makes no network requests at all.
 - Backups are plain files that you control.
 
 | Permission | Why |

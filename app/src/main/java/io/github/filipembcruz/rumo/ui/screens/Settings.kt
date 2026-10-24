@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AccessibilityNew
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeleteForever
@@ -228,6 +229,10 @@ fun SettingsRoute() {
                 Label(Icons.Rounded.FilterList, s.minListValue(mm.toInt()))
                 Slider(mm, { mm = it.toInt().toFloat() }, valueRange = 0f..15f, onValueChangeFinished = { set { prefs.minListMinutes = mm.toInt() } },
                     colors = SliderDefaults.colors(thumbColor = c.primary, activeTrackColor = c.primary, inactiveTrackColor = c.surfaceAlt))
+                ToggleRow(Icons.Rounded.Public, s.siteIconsT, s.siteIconsSub, prefs.siteIcons, {
+                    set { prefs.siteIcons = it }
+                    if (!it) io.github.filipembcruz.rumo.data.SiteIcons.clear(context)
+                }, c.primary)
             }
         }
         item { Header(s.backupData) }

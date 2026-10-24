@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -168,7 +169,32 @@ fun LetterAvatar(text: String, color: Color, size: Dp = 40.dp) {
 }
 
 @Composable
-fun SiteAvatar(domain: String, cat: Cat, size: Dp = 40.dp) = LetterAvatar(domain.removePrefix("www."), cat.color(), size)
+fun SiteAvatar(domain: String, cat: Cat, size: Dp = 40.dp) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { io.github.filipembcruz.rumo.core.Prefs.get(ctx) }
+    val enabled = prefs.siteIcons
+    val icon by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(
+        if (enabled) io.github.filipembcruz.rumo.data.SiteIcons.cached(ctx, domain) else null, domain, enabled,
+    ) {
+        if (enabled && value == null) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { io.github.filipembcruz.rumo.data.SiteIcons.get(ctx, domain) }.getOrNull()
+            }
+        }
+    }
+    val bmp = icon
+    if (bmp == null) {
+        LetterAvatar(domain.removePrefix("www."), cat.color(), size)
+    } else {
+        val img = remember(bmp) { bmp.asImageBitmap() }
+        Box(
+            Modifier.size(size).clip(RoundedCornerShape(size * 0.28f)).background(Color.White),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.foundation.Image(img, null, Modifier.size(size * 0.78f).clip(RoundedCornerShape(size * 0.16f)))
+        }
+    }
+}
 
 @Composable
 fun CatDot(cat: Cat, size: Dp = 10.dp) {

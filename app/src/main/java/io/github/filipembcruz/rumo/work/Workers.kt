@@ -31,6 +31,11 @@ class RumoWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         runCatching { io.github.filipembcruz.rumo.data.Battery.sample(ctx) }
         runCatching { summaries(ctx) }
         runCatching { if (!Perms.accessibility(ctx)) limitAlerts(ctx) }
+        runCatching {
+            // prefetch icons for today's websites so the widget can show them
+            if (Prefs.get(ctx).siteIcons) io.github.filipembcruz.rumo.data.Repo.today(ctx).sites.take(8)
+                .forEach { io.github.filipembcruz.rumo.data.SiteIcons.get(ctx, it.domain) }
+        }
         io.github.filipembcruz.rumo.widget.RumoWidget.refresh(ctx)
         return Result.success()
     }

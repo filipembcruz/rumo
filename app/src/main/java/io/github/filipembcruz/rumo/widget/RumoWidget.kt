@@ -103,7 +103,7 @@ data class WidgetData(
                         runCatching { pm.getApplicationIcon(a.pkg).toBitmap(72, 72) }.getOrNull(),
                         Color(a.cat.color), a.ms.toFloat() / maxA)
                 },
-                sites = sites.map { st -> WidgetRow(st.domain.removePrefix("www."), st.ms, null, Color(st.cat.color), st.ms.toFloat() / maxS) },
+                sites = sites.map { st -> WidgetRow(st.domain.removePrefix("www."), st.ms, runCatching { io.github.filipembcruz.rumo.data.SiteIcons.cached(context, st.domain) }.getOrNull(), Color(st.cat.color), st.ms.toFloat() / maxS) },
                 limits = m.limits.filter { it.limit.active }.sortedByDescending { it.fraction }.take(3).map { ls ->
                     val name = when (ls.limit.kind) {
                         TargetKind.APP -> AppNames.label(context, ls.limit.target)

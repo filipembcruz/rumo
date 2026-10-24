@@ -48,6 +48,7 @@ class Prefs private constructor(context: Context) {
     // blocking
     var pauseSeconds: Int get() = int("pause_s", 8); set(v) = putInt("pause_s", v)
     var strict: Boolean get() = bool("strict", false); set(v) = putBool("strict", v)
+    var siteIcons: Boolean get() = bool("site_icons", true); set(v) = putBool("site_icons", v)
     var blockAdult: Boolean get() = bool("block_adult", false); set(v) = putBool("block_adult", v)
 
     // lists

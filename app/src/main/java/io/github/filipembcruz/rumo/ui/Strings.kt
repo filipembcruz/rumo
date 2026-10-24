@@ -371,6 +371,8 @@ class Strings(val pt: Boolean) {
     val nMonitor = t("Show monitoring notification", "Mostrar notificação de monitoramento")
     val nMonitorSub = t("A quiet, permanent notice while Rumo tracks sites", "Um aviso discreto enquanto o Rumo rastreia sites")
     val blocking = t("Blocking", "Bloqueio")
+    val siteIconsT = t("Website icons", "Ícones dos sites")
+    val siteIconsSub = t("Downloaded directly from each site you visit and saved on your phone", "Baixados direto de cada site que você visita e salvos no celular")
     val blockAdult = t("Block adult sites (+18)", "Bloquear sites adultos (+18)")
     val blockAdultSub = t("Always on, in every browser · needs “Sites & blocking”", "Sempre ativo, em qualquer navegador · requer “Sites e bloqueio”")
     val lists = t("Lists", "Listas")

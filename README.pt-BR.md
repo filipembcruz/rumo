@@ -47,14 +47,14 @@ O Bem-estar digital do Android diz que você passou 3 horas no *Brave* — mas n
 
 ### 📊 Saiba para onde vai seu tempo
 - **Tempo de tela por app**, com aberturas, sessão média, primeiro uso do dia e desbloqueios.
-- **Tempo por site** no Brave, Chrome, Firefox, Edge, Samsung Internet, Opera, DuckDuckGo e outros.
+- **Tempo por site**, com o ícone de cada site, no Brave, Chrome, Firefox, Edge, Samsung Internet, Opera, DuckDuckGo e outros.
 - **Categorias** para apps e sites (redes sociais, vídeo, jogos, aprendizado, produtividade…) — altere com um toque.
 - **Estatísticas** por dia, semana, mês, ano ou período personalizado: barras animadas com a linha da meta, rosca por categoria, mapa de calor por hora e dia da semana, médias, dia mais longo e comparação com o período anterior.
 - **Nota de foco** (0–100) a partir da meta, do equilíbrio e dos desbloqueios.
 - **Estimativa de bateria** por app na carga atual.
 
 ### 🛡️ Tome o controle
-- **Limites diários** por app, site ou categoria — alerta em 80% e 100%, ou **bloqueio** quando o tempo acabar (com "mais 5 minutos" opcional).
+- **Limites diários** por app, site ou categoria, iguais todo dia ou **diferentes por dia da semana** (ex.: mais tempo de sexta a domingo) — alerta em 80% e 100%, ou **bloqueio** quando o tempo acabar (com "mais 5 minutos" opcional).
 - **Sessões de foco** com anel de contagem regressiva; apps e sites que distraem ficam bloqueados. **Modo rígido**: só encerra segurando.
 - **Horários** como *Hora de dormir* ou *Trabalho* que bloqueiam categorias automaticamente.
 - **Pausa consciente**: uma tela de respiração antes de abrir os apps escolhidos, mostrando quantas vezes você já os abriu hoje.
@@ -98,6 +98,7 @@ Prefere não usar? Use **"Sobrepor a outros apps"**: limites, foco, horários e 
 - **Sem conta, sem servidores, sem anúncios, sem analytics.** Tudo fica só no seu celular.
 - O serviço de acessibilidade lê **apenas qual app está na tela e a barra de endereço do navegador**. O Rumo nunca lê o que você digita, mensagens ou senhas.
 - Uma notificação discreta aparece enquanto o rastreio de sites está ativo (dá para ocultar).
+- **Ícones dos sites** são baixados direto dos sites que você visita (nunca por serviço de terceiros) e ficam salvos no celular. Desative em **Ajustes → Listas** e o Rumo não faz nenhuma conexão.
 - Backups são arquivos sob seu controle.
 
 | Permissão | Para quê |
