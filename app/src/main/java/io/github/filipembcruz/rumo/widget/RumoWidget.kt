@@ -66,7 +66,7 @@ private val TextMuted = androidx.glance.color.ColorProvider(day = Color(0xFF7B78
 private val Track = androidx.glance.color.ColorProvider(day = Color(0xFFE9E5F8), night = Color(0xFF332E52))
 
 data class WidgetRow(val title: String, val ms: Long, val icon: Bitmap?, val color: Color, val fraction: Float)
-data class WidgetLimit(val name: String, val used: Long, val limit: Long)
+data class WidgetLimit(val name: String, val used: Long, val limit: Long, val ring: Bitmap? = null)
 
 data class WidgetData(
     val s: Strings,
@@ -77,6 +77,11 @@ data class WidgetData(
     val sites: List<WidgetRow>,
     val limits: List<WidgetLimit>,
     val streak: Int,
+    val pickups: Int = 0,
+    val avg7: Long = 0,
+    val focusScore: Int = 0,
+    val hourly: Bitmap? = null,
+    val peakHour: Int = -1,
 ) {
     companion object {
         fun load(context: Context): WidgetData {
@@ -105,10 +110,59 @@ data class WidgetData(
                         TargetKind.SITE -> ls.limit.target
                         TargetKind.CATEGORY -> s.cat(Cat.of(ls.limit.target))
                     }
-                    WidgetLimit(name, ls.usedMs, ls.limit.minutes * 60_000L)
+                    val lim = ls.limit.minutes * 60_000L
+                    val f = if (lim > 0) ls.usedMs.toFloat() / lim else 0f
+                    WidgetLimit(name, ls.usedMs, lim, miniRing(f, 96))
                 },
                 streak = m.streak,
+                pickups = m.pickups,
+                avg7 = m.avg7,
+                focusScore = m.focusScore,
+                hourly = hourBars(m.hourly, 720, 200),
+                peakHour = m.hourly.withIndex().maxByOrNull { it.value }?.takeIf { it.value > 0 }?.index ?: -1,
             )
+        }
+
+        /** Small single-color ring for a limit. */
+        fun miniRing(fraction: Float, px: Int): Bitmap {
+            val bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
+            val cv = android.graphics.Canvas(bmp)
+            val stroke = px * 0.16f
+            val r = RectF(stroke / 2, stroke / 2, px - stroke / 2, px - stroke / 2)
+            val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = stroke; strokeCap = Paint.Cap.ROUND }
+            val col = when { fraction >= 1f -> 0xFFFF6B6B.toInt(); fraction >= 0.8f -> 0xFFFFB238.toInt(); else -> 0xFF8B6CFF.toInt() }
+            p.color = (col and 0x00FFFFFF) or 0x33000000
+            cv.drawArc(r, 0f, 360f, false, p)
+            p.color = col
+            if (fraction > 0f) cv.drawArc(r, -90f, 360f * min(fraction, 1f), false, p)
+            return bmp
+        }
+
+        /** 24 rounded bars for today's usage by hour; the current hour is highlighted. */
+        fun hourBars(hours: List<Long>, w: Int, h: Int): Bitmap {
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val cv = android.graphics.Canvas(bmp)
+            val max = (hours.maxOrNull() ?: 0L).coerceAtLeast(1L).toFloat()
+            val now = java.time.LocalTime.now().hour
+            val slot = w / 24f
+            val bw = slot * 0.62f
+            val p = Paint(Paint.ANTI_ALIAS_FLAG)
+            for (i in 0 until 24) {
+                val v = hours.getOrElse(i) { 0L } / max
+                val x = i * slot + (slot - bw) / 2
+                p.color = 0x226B4EFF
+                cv.drawRoundRect(RectF(x, 0f, x + bw, h.toFloat()), bw / 2, bw / 2, p)
+                if (v > 0f) {
+                    val top = h - (h * v).coerceAtLeast(bw)
+                    p.color = when {
+                        i == now -> 0xFFFF7AB6.toInt()
+                        i > now -> 0x556B4EFF
+                        else -> 0xFF8B6CFF.toInt()
+                    }
+                    cv.drawRoundRect(RectF(x, top, x + bw, h.toFloat()), bw / 2, bw / 2, p)
+                }
+            }
+            return bmp
         }
 
         /** Gradient progress ring drawn into a bitmap (Glance can't draw arcs itself). */
@@ -232,93 +286,164 @@ private fun Medium(d: WidgetData) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             RingBlock(d, 72)
             Spacer(GlanceModifier.height(4.dp))
-            Text(Fmt.dur(d.total), style = style(16, bold = true))
+            Text(Fmt.dur(d.total), style = style(17, bold = true))
         }
-        Spacer(GlanceModifier.width(14.dp))
-        Column(GlanceModifier.defaultWeight()) {
-            if (d.apps.isEmpty()) Text(d.s.noAppsYet, style = style(12, TextMuted), maxLines = 2)
-            d.apps.take(3).forEach { r ->
-                UsageRow(r)
-                Spacer(GlanceModifier.height(6.dp))
-            }
+        Spacer(GlanceModifier.width(12.dp))
+        if (d.apps.isEmpty()) {
+            Text(d.s.noAppsYet, style = style(12, TextMuted), maxLines = 2, modifier = GlanceModifier.defaultWeight())
+        } else {
+            AppTiles(d.apps.take(3), GlanceModifier.defaultWeight())
         }
     }
 }
 
 @Composable
 private fun Large(d: WidgetData) {
+    val tall = LocalSize.current.height >= 330.dp
     Column(GlanceModifier.fillMaxSize()) {
         Header(d)
         Spacer(GlanceModifier.height(10.dp))
-        Section(d.s.topApps) {
-            d.apps.take(3).forEach { r -> UsageRow(r); Spacer(GlanceModifier.height(6.dp)) }
-        }
-        if (d.sites.isNotEmpty()) {
-            Spacer(GlanceModifier.height(8.dp))
-            Section(d.s.topSites) {
-                d.sites.take(2).forEach { r -> UsageRow(r); Spacer(GlanceModifier.height(6.dp)) }
-            }
-        }
-        if (d.limits.isNotEmpty()) {
-            Spacer(GlanceModifier.height(8.dp))
-            Section(d.s.limitsToday) {
-                d.limits.take(2).forEach { l -> LimitRow(l); Spacer(GlanceModifier.height(6.dp)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Column(GlanceModifier.fillMaxWidth().cornerRadius(18.dp).background(Card).padding(horizontal = 12.dp, vertical = 10.dp)) {
-        Text(title, style = style(11, TextMuted, bold = true))
-        Spacer(GlanceModifier.height(6.dp))
-        content()
-    }
-}
-
-@Composable
-private fun UsageRow(r: WidgetRow) {
-    Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (r.icon != null) {
-            Image(ImageProvider(r.icon), contentDescription = null, modifier = GlanceModifier.size(22.dp).cornerRadius(6.dp))
+        Stats(d)
+        Spacer(GlanceModifier.height(8.dp))
+        if (d.apps.isEmpty()) {
+            Text(d.s.noAppsYet, style = style(12, TextMuted), maxLines = 2)
         } else {
-            Box(GlanceModifier.size(22.dp).cornerRadius(11.dp).background(ColorProvider(r.color)), contentAlignment = Alignment.Center) {
-                Text(r.title.take(1).uppercase(), style = TextStyle(color = ColorProvider(Color.White), fontSize = 11.sp, fontWeight = FontWeight.Bold))
-            }
+            AppTiles(d.apps.take(4), GlanceModifier.fillMaxWidth())
         }
-        Spacer(GlanceModifier.width(8.dp))
-        Column(GlanceModifier.defaultWeight()) {
+        if (tall && d.hourly != null) {
+            Spacer(GlanceModifier.height(8.dp))
+            HourChart(d, GlanceModifier.fillMaxWidth().defaultWeight())
+        }
+        if (d.sites.isNotEmpty() || d.limits.isNotEmpty()) {
+            Spacer(GlanceModifier.height(8.dp))
             Row(GlanceModifier.fillMaxWidth()) {
-                Text(r.title, style = style(12), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-                Text(Fmt.dur(r.ms), style = style(12, bold = true))
+                if (d.sites.isNotEmpty()) {
+                    Box(GlanceModifier.defaultWeight()) { SitesCard(d) }
+                }
+                if (d.sites.isNotEmpty() && d.limits.isNotEmpty()) Spacer(GlanceModifier.width(8.dp))
+                if (d.limits.isNotEmpty()) {
+                    Box(GlanceModifier.defaultWeight()) { LimitsCard(d) }
+                }
             }
-            Spacer(GlanceModifier.height(3.dp))
-            LinearProgressIndicator(
-                progress = r.fraction.coerceIn(0f, 1f),
-                modifier = GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp),
-                color = ColorProvider(r.color),
-                backgroundColor = Track,
-            )
         }
     }
 }
 
 @Composable
-private fun LimitRow(l: WidgetLimit) {
-    val f = if (l.limit > 0) l.used.toFloat() / l.limit else 0f
-    val col = when { f >= 1f -> Coral; f >= 0.8f -> Amber; else -> Violet }
-    Column(GlanceModifier.fillMaxWidth()) {
-        Row(GlanceModifier.fillMaxWidth()) {
-            Text(l.name, style = style(12), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-            Text("${Fmt.dur(l.used)} / ${Fmt.dur(l.limit)}", style = style(11, ColorProvider(col), bold = true))
-        }
-        Spacer(GlanceModifier.height(3.dp))
-        LinearProgressIndicator(
-            progress = f.coerceIn(0f, 1f),
-            modifier = GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp),
-            color = ColorProvider(col),
-            backgroundColor = Track,
+private fun Stats(d: WidgetData) {
+    val diff = if (d.avg7 > 0) ((d.total - d.avg7) * 100 / d.avg7).toInt() else 0
+    Row(GlanceModifier.fillMaxWidth()) {
+        StatCard(d.pickups.toString(), d.s.pickups, TextMain, GlanceModifier.defaultWeight())
+        Spacer(GlanceModifier.width(8.dp))
+        StatCard(d.focusScore.toString(), d.s.focusScore, ColorProvider(if (d.focusScore >= 60) Mint else if (d.focusScore >= 40) Amber else Coral), GlanceModifier.defaultWeight())
+        Spacer(GlanceModifier.width(8.dp))
+        StatCard(
+            if (d.avg7 > 0) (if (diff > 0) "+$diff%" else "$diff%") else "–",
+            d.s.vsAvg7,
+            ColorProvider(if (diff > 0) Coral else Mint),
+            GlanceModifier.defaultWeight(),
         )
     }
 }
+
+@Composable
+private fun StatCard(value: String, label: String, color: ColorProvider, modifier: GlanceModifier) {
+    Column(modifier.cornerRadius(16.dp).background(Card).padding(horizontal = 10.dp, vertical = 8.dp)) {
+        Text(value, style = style(18, color, bold = true), maxLines = 1)
+        Text(label, style = style(10, TextMuted), maxLines = 1)
+    }
+}
+
+@Composable
+private fun AppTiles(apps: List<WidgetRow>, modifier: GlanceModifier) {
+    Row(modifier) {
+        apps.forEachIndexed { i, r ->
+            if (i > 0) Spacer(GlanceModifier.width(8.dp))
+            Column(
+                GlanceModifier.defaultWeight().cornerRadius(16.dp).background(Card).padding(horizontal = 6.dp, vertical = 9.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Dot(r, 30)
+                Spacer(GlanceModifier.height(5.dp))
+                Text(Fmt.dur(r.ms), style = style(15, bold = true), maxLines = 1)
+                Text(r.title, style = style(10, TextMuted), maxLines = 1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Dot(r: WidgetRow, sizeDp: Int) {
+    if (r.icon != null) {
+        Image(ImageProvider(r.icon), contentDescription = null, modifier = GlanceModifier.size(sizeDp.dp).cornerRadius((sizeDp / 4).dp))
+    } else {
+        Box(GlanceModifier.size(sizeDp.dp).cornerRadius((sizeDp / 2).dp).background(ColorProvider(r.color)), contentAlignment = Alignment.Center) {
+            Text(r.title.take(1).uppercase(), style = TextStyle(color = ColorProvider(Color.White), fontSize = (sizeDp * 0.45f).sp, fontWeight = FontWeight.Bold))
+        }
+    }
+}
+
+@Composable
+private fun HourChart(d: WidgetData, modifier: GlanceModifier) {
+    Column(modifier.cornerRadius(18.dp).background(Card).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Row(GlanceModifier.fillMaxWidth()) {
+            Text(d.s.todayByHour, style = style(11, TextMuted, bold = true), modifier = GlanceModifier.defaultWeight())
+            if (d.peakHour >= 0) Text(d.s.peakAt(d.peakHour), style = style(11, ColorProvider(Violet), bold = true))
+        }
+        Spacer(GlanceModifier.height(6.dp))
+        Image(
+            ImageProvider(d.hourly!!), contentDescription = null,
+            contentScale = androidx.glance.layout.ContentScale.FillBounds,
+            modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
+        )
+        Spacer(GlanceModifier.height(4.dp))
+        Row(GlanceModifier.fillMaxWidth()) {
+            listOf("0h", "6h", "12h", "18h").forEach { h ->
+                Text(h, style = style(9, TextMuted), modifier = GlanceModifier.defaultWeight())
+            }
+        }
+    }
+}
+
+@Composable
+private fun SitesCard(d: WidgetData) {
+    Column(GlanceModifier.fillMaxWidth().cornerRadius(18.dp).background(Card).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Text(d.s.sitesShort, style = style(11, TextMuted, bold = true))
+        d.sites.take(2).forEach { r ->
+            Spacer(GlanceModifier.height(6.dp))
+            Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Dot(r, 22)
+                Spacer(GlanceModifier.width(6.dp))
+                Column(GlanceModifier.defaultWeight()) {
+                    Text(Fmt.dur(r.ms), style = style(14, bold = true), maxLines = 1)
+                    Text(r.title, style = style(10, TextMuted), maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LimitsCard(d: WidgetData) {
+    Column(GlanceModifier.fillMaxWidth().cornerRadius(18.dp).background(Card).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Text(d.s.limitsShort, style = style(11, TextMuted, bold = true))
+        d.limits.take(2).forEach { l ->
+            val f = if (l.limit > 0) l.used.toFloat() / l.limit else 0f
+            val col = when { f >= 1f -> Coral; f >= 0.8f -> Amber; else -> TextMainColor }
+            Spacer(GlanceModifier.height(6.dp))
+            Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (l.ring != null) Image(ImageProvider(l.ring), contentDescription = null, modifier = GlanceModifier.size(22.dp))
+                Spacer(GlanceModifier.width(6.dp))
+                Column(GlanceModifier.defaultWeight()) {
+                    Row {
+                        Text(Fmt.dur(l.used), style = style(14, if (col == TextMainColor) TextMain else ColorProvider(col), bold = true), maxLines = 1)
+                        Text(" / ${Fmt.dur(l.limit)}", style = style(10, TextMuted), maxLines = 1)
+                    }
+                    Text(l.name, style = style(10, TextMuted), maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+private val TextMainColor = Color.Unspecified
