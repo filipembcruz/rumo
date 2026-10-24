@@ -109,7 +109,6 @@ fun SettingsRoute() {
     var confirmWipe by remember { mutableStateOf(false) }
     val usageOk = remember(nav.tick) { Perms.usage(context) }
     val a11yOk = remember(nav.tick) { Perms.accessibility(context) }
-    val overlayOk = remember(nav.tick) { Perms.overlay(context) }
     val notifOk = remember(nav.tick, v) { Perms.notifications(context) }
 
     fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
@@ -171,7 +170,6 @@ fun SettingsRoute() {
             RCard {
                 PermRow(Icons.Rounded.QueryStats, s.permUsage, s.permUsageSub, usageOk) { Perms.openUsageSettings(context) }
                 PermRow(Icons.Rounded.AccessibilityNew, s.permSites, s.permSitesSub, a11yOk) { nav.setupBlocking() }
-                PermRow(Icons.Rounded.Layers, s.permOverlay, s.permOverlaySub, overlayOk || a11yOk) { Perms.openOverlaySettings(context) }
                 PermRow(Icons.Rounded.Notifications, s.permNotif, s.permNotifSub, notifOk) {
                     if (Build.VERSION.SDK_INT >= 33 && !notifOk) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     else Perms.openNotificationSettings(context)

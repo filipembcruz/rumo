@@ -22,14 +22,26 @@ object Perms {
         }
     }
 
-    fun overlay(context: Context) = Settings.canDrawOverlays(context)
+    /** Reads the app-op directly: Settings.canDrawOverlays can stay true after the user revokes it. */
+    fun overlay(context: Context): Boolean = runCatching {
+        val ops = context.getSystemService(android.app.AppOpsManager::class.java)
+        val uid = android.os.Process.myUid()
+        val mode = if (android.os.Build.VERSION.SDK_INT >= 29)
+            ops.unsafeCheckOpNoThrow("android:system_alert_window", uid, context.packageName)
+        else @Suppress("DEPRECATION") ops.checkOpNoThrow("android:system_alert_window", uid, context.packageName)
+        when (mode) {
+            android.app.AppOpsManager.MODE_ALLOWED -> true
+            android.app.AppOpsManager.MODE_DEFAULT -> Settings.canDrawOverlays(context)
+            else -> false
+        }
+    }.getOrElse { Settings.canDrawOverlays(context) }
 
     fun openOverlaySettings(context: Context) = start(
         context, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
     )
 
     /** Some way to interrupt apps is available. */
-    fun canBlock(context: Context) = accessibility(context) || overlay(context)
+    fun canBlock(context: Context) = accessibility(context)
 
     fun openUsageSettings(context: Context) = start(context, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
 

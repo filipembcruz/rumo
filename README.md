@@ -91,7 +91,7 @@ Android protects accessibility for apps installed outside the Play Store ("Restr
 2. **Settings → Apps → Rumo → ⋮ (top right) → Allow restricted settings**.
 3. Back to **Accessibility** and turn Rumo on.
 
-Prefer not to? Use **"Display over other apps"** instead: limits, focus, schedules and the mindful pause still block apps (websites aren't tracked in this mode).
+Without accessibility, Rumo still tracks time per app and sends limit alerts, but it can't block or track websites.
 
 ## Privacy
 
@@ -105,7 +105,6 @@ Prefer not to? Use **"Display over other apps"** instead: limits, focus, schedul
 |---|---|
 | Usage access | Time per app, opens, unlocks (required) |
 | Accessibility *(optional)* | Websites in browsers, block and pause screens |
-| Display over other apps *(optional)* | Blocking without accessibility |
 | Notifications *(optional)* | Alerts, summaries and reminders |
 
 ## Build from source
@@ -125,7 +124,7 @@ Every push to `main` builds a signed release APK with **GitHub Actions** and pub
 
 - **Kotlin** + **Jetpack Compose** (Material 3), custom design system with Poppins and Inter
 - Hand-made Compose **Canvas charts** (bars, area, donut, heatmap, rings) with animations
-- **UsageStatsManager** for app usage, an **AccessibilityService** for websites and blocking, a foreground service fallback with overlay
+- **UsageStatsManager** for app usage, an **AccessibilityService** for websites and blocking
 - **Glance** for the home screen widget, **WorkManager** for summaries and alerts
 - **SQLite** (no ORM), JSON backups through the Storage Access Framework
 - **Roborazzi + Robolectric** screenshot tests in CI

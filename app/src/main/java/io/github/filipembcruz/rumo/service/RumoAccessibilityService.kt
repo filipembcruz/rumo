@@ -103,7 +103,6 @@ class RumoAccessibilityService : AccessibilityService() {
         lastMonitorPref = Prefs.get(this).monitoringNotification
         runCatching { updateMonitorNotification() }
         running = true
-        runCatching { stopService(Intent(this, BlockerService::class.java)) }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

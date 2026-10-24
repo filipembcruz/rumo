@@ -27,7 +27,6 @@ class RumoWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         runCatching { Collector.sync(ctx, full = LocalTime.now().minute < 15) }
-        runCatching { io.github.filipembcruz.rumo.service.BlockerService.ensure(ctx) }
         runCatching { io.github.filipembcruz.rumo.data.Battery.sample(ctx) }
         runCatching { summaries(ctx) }
         runCatching { if (!Perms.accessibility(ctx)) limitAlerts(ctx) }

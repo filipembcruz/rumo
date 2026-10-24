@@ -49,7 +49,6 @@ fun BlockingSetupSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val nav = LocalNav.current
     val a11y = remember(nav.tick) { Perms.accessibility(context) }
-    val overlay = remember(nav.tick) { Perms.overlay(context) }
     RumoSheet(onDismiss, s.setupTitle) {
         Column(Modifier.heightIn(max = 600.dp).verticalScroll(rememberScrollState())) {
             Text(s.setupIntro, style = MaterialTheme.typography.bodyMedium, color = c.muted)
@@ -63,13 +62,6 @@ fun BlockingSetupSheet(onDismiss: () -> Unit) {
                     PrimaryButton(s.openAccessibility, Modifier.fillMaxWidth()) { Perms.openAccessibilitySettings(context) }
                     Spacer(Modifier.height(8.dp))
                     SecondaryButton(s.openAppInfo, Modifier.fillMaxWidth()) { Perms.openAppSettings(context) }
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-            OptionCard(Icons.Rounded.Layers, s.setupOverlayTitle, s.setupOverlayBody, overlay || a11y, null) {
-                if (!overlay && !a11y) {
-                    Spacer(Modifier.height(4.dp))
-                    SecondaryButton(s.allowOverlay, Modifier.fillMaxWidth()) { Perms.openOverlaySettings(context) }
                 }
             }
             Spacer(Modifier.height(8.dp))

@@ -40,101 +40,10 @@ object Interventions {
     }
 }
 
-/**
- * Blocking without accessibility: watches the foreground app through usage events and,
- * with "Display over other apps", shows the interrupt screen. Websites can't be seen in this mode.
- * Runs only when the accessibility service is off.
- */
-class BlockerService : Service() {
-    private lateinit var thread: HandlerThread
-    private lateinit var bg: Handler
-    private var lastPkg: String? = null
-    private var ticks = 0
-
-    private val loop = object : Runnable {
-        override fun run() {
-            val interactive = runCatching { getSystemService(PowerManager::class.java)?.isInteractive ?: true }.getOrDefault(true)
-            runCatching { if (interactive) step() else lastPkg = null }
-            if (running) bg.postDelayed(this, if (interactive) 1200 else 5000)
-        }
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-
-    override fun onCreate() {
-        super.onCreate()
-        val s = Notifier.strings(this)
-        val n = Notifier.build(this, Notifier.CH_MONITOR, s.blockerT, s.blockerB, ongoing = true)
-        if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(Notifier.ID_MONITOR, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(Notifier.ID_MONITOR, n)
-        }
-        running = true
-        thread = HandlerThread("rumo-blocker").apply { start() }
-        bg = Handler(thread.looper)
-        bg.post(loop)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
-
-    override fun onDestroy() {
-        running = false
-        if (::bg.isInitialized) { bg.removeCallbacks(loop); thread.quitSafely() }
-        super.onDestroy()
-    }
-
-    private fun step() {
-        if (RumoAccessibilityService.running || !Perms.overlay(this) || !Collector.hasPermission(this)) {
-            stopSelf(); return
-        }
-        val pkg = foreground() ?: return
-        val changed = pkg != lastPkg
-        lastPkg = pkg
-        ticks++
-        if (pkg == packageName) return
-        if (changed || ticks % 12 == 0) {
-            val d = Rules.evaluate(this, pkg, null, Collector.todayLive(this), emptyMap()) ?: return
-            Interventions.launch(this, d, pkg)
-        }
-    }
-
-    /** The app most recently brought to the front (from the last minute of usage events). */
-    private fun foreground(): String? {
-        val usm = getSystemService(UsageStatsManager::class.java) ?: return null
-        val now = System.currentTimeMillis()
-        val events = usm.queryEvents(now - 60_000, now)
-        val e = UsageEvents.Event()
-        var top: String? = null
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            if (e.eventType == 1) top = e.packageName // ACTIVITY_RESUMED
-        }
-        return top ?: lastPkg
-    }
-
-    companion object {
-        @Volatile var running = false
-
-        /** Start or stop the fallback blocker depending on permissions. Safe to call often. */
-        fun ensure(context: Context) {
-            val want = Perms.overlay(context) && !Perms.accessibility(context) && Collector.hasPermission(context)
-            if (want && !running) {
-                runCatching {
-                    val i = Intent(context, BlockerService::class.java)
-                    if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i)
-                }
-            } else if (!want && running) {
-                runCatching { context.stopService(Intent(context, BlockerService::class.java)) }
-            }
-        }
-    }
-}
-
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            BlockerService.ensure(context)
+            runCatching { io.github.filipembcruz.rumo.work.RumoWorker.schedule(context) }
         }
     }
 }

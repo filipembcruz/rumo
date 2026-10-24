@@ -91,7 +91,7 @@ O Android protege a acessibilidade de apps instalados fora da Play Store ("Confi
 2. **Configurações → Apps → Rumo → ⋮ (canto superior direito) → Permitir configurações restritas**.
 3. Volte à **Acessibilidade** e ative o Rumo.
 
-Prefere não usar? Use **"Sobrepor a outros apps"**: limites, foco, horários e pausa consciente continuam bloqueando apps (sem rastrear sites).
+Sem acessibilidade, o Rumo continua contando o tempo por app e enviando alertas de limite, mas não bloqueia nem rastreia sites.
 
 ## Privacidade
 
@@ -105,7 +105,6 @@ Prefere não usar? Use **"Sobrepor a outros apps"**: limites, foco, horários e 
 |---|---|
 | Acesso ao uso | Tempo por app, aberturas, desbloqueios (obrigatória) |
 | Acessibilidade *(opcional)* | Sites nos navegadores, telas de bloqueio e pausa |
-| Sobrepor a outros apps *(opcional)* | Bloqueio sem acessibilidade |
 | Notificações *(opcional)* | Alertas, resumos e lembretes |
 
 ## Compilar

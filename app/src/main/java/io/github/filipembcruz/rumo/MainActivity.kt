@@ -53,7 +53,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         resumeTick.intValue++
-        io.github.filipembcruz.rumo.service.BlockerService.ensure(this)
         runCatching { io.github.filipembcruz.rumo.data.Battery.sample(this) }
     }
 
