@@ -96,7 +96,7 @@ Prefer not to? Use **"Display over other apps"** instead: limits, focus, schedul
 ## Privacy
 
 - **No account, no servers, no ads, no analytics.** Everything is stored only on your phone.
-- The accessibility service reads **only which app is on screen and the browser's address bar**. Rumo never reads what you type, your messages or passwords.
+- The accessibility service is limited to **web browsers only** and reads just the address bar. It never observes other apps (so banking apps don't flag Rumo), and never reads what you type, your messages or passwords. Rumo never shows anything on top of banking apps.
 - A quiet notification shows while website tracking is active (you can hide it).
 - **Website icons** are downloaded directly from the sites you visit (never through a third-party service) and cached on the phone. Turn them off in **Settings → Lists** and Rumo makes no network requests at all.
 - Backups are plain files that you control.

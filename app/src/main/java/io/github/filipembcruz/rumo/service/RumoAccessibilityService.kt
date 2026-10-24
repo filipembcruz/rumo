@@ -49,6 +49,35 @@ class RumoAccessibilityService : AccessibilityService() {
         }
     }
 
+    /**
+     * The accessibility service only listens to web browsers (see accessibility_config.xml), so
+     * banking apps don't see Rumo as watching them. Other apps are detected from usage events.
+     */
+    private val fgPoll = object : Runnable {
+        override fun run() {
+            runCatching {
+                if (screenOn) {
+                    val fg = foreground()
+                    if (fg != null && fg != current) onWindow(fg)
+                }
+            }
+            bg.postDelayed(this, POLL_MS)
+        }
+    }
+
+    private fun foreground(): String? {
+        val usm = getSystemService(android.app.usage.UsageStatsManager::class.java) ?: return null
+        val now = System.currentTimeMillis()
+        val events = usm.queryEvents(now - 15_000, now + 1_000)
+        val e = android.app.usage.UsageEvents.Event()
+        var top: String? = null
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            if (e.eventType == 1) top = e.packageName // ACTIVITY_RESUMED
+        }
+        return top
+    }
+
     private val ticker = object : Runnable {
         override fun run() {
             runCatching { tick() }
@@ -70,6 +99,7 @@ class RumoAccessibilityService : AccessibilityService() {
             if (Build.VERSION.SDK_INT >= 33) registerReceiver(screenReceiver, filter, RECEIVER_NOT_EXPORTED) else registerReceiver(screenReceiver, filter)
         }
         bg.postDelayed(ticker, TICK_MS)
+        bg.postDelayed(fgPoll, POLL_MS)
         lastMonitorPref = Prefs.get(this).monitoringNotification
         runCatching { updateMonitorNotification() }
         running = true
@@ -95,7 +125,7 @@ class RumoAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         running = false
         runCatching { unregisterReceiver(screenReceiver) }
-        if (::bg.isInitialized) { bg.post { closeWeb() }; bg.removeCallbacks(ticker); worker.quitSafely() }
+        if (::bg.isInitialized) { bg.post { closeWeb() }; bg.removeCallbacks(ticker); bg.removeCallbacks(fgPoll); worker.quitSafely() }
         Notifier.cancel(this, Notifier.ID_MONITOR)
         super.onDestroy()
     }
@@ -220,6 +250,7 @@ class RumoAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TICK_MS = 20_000L
+        private const val POLL_MS = 1_500L
         @Volatile var running = false
     }
 }

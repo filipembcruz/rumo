@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Rumo</string>
     <string name="accessibility_label">Rumo – sites &amp; blocking</string>
-    <string name="accessibility_description">Rumo uses this to see which app is on screen and the website address in your browser, so it can count time per website and show the block or pause screen when a limit, focus session or schedule applies. Nothing is sent anywhere: all data stays on this phone. Rumo never reads what you type, your messages or passwords.</string>
+    <string name="accessibility_description">Rumo only watches web browsers (Chrome, Brave, Firefox…): it reads the website address so it can count time per website and show the block or pause screen when a limit, focus session or schedule applies. It does not observe any other app, including banking apps. Nothing is sent anywhere: all data stays on this phone. Rumo never reads what you type, your messages or passwords.</string>
     <string name="widget_name">Rumo: screen time</string>
     <string name="widget_desc">Today\'s screen time, top apps, websites and limits</string>
 </resources>

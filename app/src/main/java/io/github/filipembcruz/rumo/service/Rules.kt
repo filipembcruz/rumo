@@ -31,7 +31,9 @@ object Rules {
     )
 
     fun isSafe(context: Context, pkg: String): Boolean =
-        pkg == context.packageName || pkg in safe || pkg in io.github.filipembcruz.rumo.data.Collector.excluded(context)
+        pkg == context.packageName || pkg in safe || pkg in io.github.filipembcruz.rumo.data.Collector.excluded(context) ||
+            // never put anything on top of banking / finance apps
+            io.github.filipembcruz.rumo.data.Categorizer.app(context, pkg) == io.github.filipembcruz.rumo.data.Cat.FINANCE
 
     fun scheduleActive(s: Schedule, now: LocalDateTime = LocalDateTime.now()): Boolean {
         if (!s.enabled) return false

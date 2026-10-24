@@ -96,7 +96,7 @@ Prefere não usar? Use **"Sobrepor a outros apps"**: limites, foco, horários e 
 ## Privacidade
 
 - **Sem conta, sem servidores, sem anúncios, sem analytics.** Tudo fica só no seu celular.
-- O serviço de acessibilidade lê **apenas qual app está na tela e a barra de endereço do navegador**. O Rumo nunca lê o que você digita, mensagens ou senhas.
+- O serviço de acessibilidade é limitado **apenas aos navegadores** e lê só a barra de endereço. Ele não observa outros apps (assim apps de banco não acusam o Rumo) e nunca lê o que você digita, mensagens ou senhas. O Rumo nunca mostra nada por cima de apps de banco.
 - Uma notificação discreta aparece enquanto o rastreio de sites está ativo (dá para ocultar).
 - **Ícones dos sites** são baixados direto dos sites que você visita (nunca por serviço de terceiros) e ficam salvos no celular. Desative em **Ajustes → Listas** e o Rumo não faz nenhuma conexão.
 - Backups são arquivos sob seu controle.
