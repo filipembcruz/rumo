@@ -1,0 +1,13 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+*.apk
+*.jks
+*.keystore
+*.b64
+gradlew
+gradlew.bat
+gradle/wrapper/

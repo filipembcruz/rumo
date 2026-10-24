@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Compass ring with a needle: "rumo" = heading/direction. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:pathData="M54,30 A24,24 0 1,1 53.99,30 Z" />
+    <path
+        android:fillColor="#FFD27A"
+        android:pathData="M66,42 L57.5,57.5 L54,54 Z M66,42 L54,54 L50.5,50.5 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,66 L50.5,50.5 L54,54 Z M42,66 L54,54 L57.5,57.5 Z" />
+</vector>
