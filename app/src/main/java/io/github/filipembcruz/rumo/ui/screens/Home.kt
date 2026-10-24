@@ -405,7 +405,7 @@ private fun InsightCard(i: Insight, m: TodayModel, a: HomeActions) {
     val copy = insightCopy(i, s) { if (it.contains('.') && !it.contains('/')) AppNames.label(context, it) else it }
     RCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            MoodOrb(copy.mood, size = 58.dp)
+            MoodOrb(copy.mood, size = 78.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(copy.title, style = MaterialTheme.typography.titleMedium, color = c.text)

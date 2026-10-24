@@ -219,6 +219,10 @@ private fun Header(d: WidgetData) {
                 maxLines = 1,
             )
         }
+        Image(
+            ImageProvider(if (d.total > d.goal) io.github.filipembcruz.rumo.R.drawable.rumi_worried else io.github.filipembcruz.rumo.R.drawable.rumi_happy),
+            contentDescription = null, modifier = GlanceModifier.size(52.dp),
+        )
     }
 }
 

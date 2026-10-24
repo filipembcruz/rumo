@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Monochrome (themed) icon: Rumi's round face. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="4.5"
-        android:pathData="M54,27a27,27 0,1 1,-0.01 0z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M69.6,38.4 L59.3,59.3 L38.4,69.6 L48.7,48.7 Z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="4"
+        android:pathData="M54,28a26,26 0,1 1,-0.01 0z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M45,51a3.6,3.6 0,1 1,-0.01 0z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M63,51a3.6,3.6 0,1 1,-0.01 0z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="3.2" android:strokeLineCap="round"
+        android:pathData="M48,61 Q54,66 60,61" />
 </vector>

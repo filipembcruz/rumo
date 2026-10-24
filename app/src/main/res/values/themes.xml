@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_bg_start">#8B7BFF</color>
-    <color name="ic_bg_end">#5B3FE6</color>
+    <color name="ic_bg_start">#1E1A3C</color>
+    <color name="ic_bg_end">#3C2878</color>
     <style name="Theme.Rumo" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>

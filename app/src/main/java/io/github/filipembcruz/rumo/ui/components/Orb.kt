@@ -1,71 +1,147 @@
 package io.github.filipembcruz.rumo.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.filipembcruz.rumo.R
+import io.github.filipembcruz.rumo.ui.UiFlags
+import kotlinx.coroutines.delay
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.random.Random
 
 enum class Mood { HAPPY, CALM, WORRIED, FOCUS, SLEEPY, CELEBRATE }
 
-private fun moodColors(m: Mood): Triple<Color, Color, Color> = when (m) {
-    Mood.HAPPY -> Triple(Color(0xFF8B6CFF), Color(0xFFC4F25C), Color(0xFF5BD6FF))
-    Mood.CALM -> Triple(Color(0xFF7C6BFF), Color(0xFF7FE3D0), Color(0xFFB7A8FF))
-    Mood.WORRIED -> Triple(Color(0xFFFF6B8A), Color(0xFFFFB238), Color(0xFF9B6BFF))
-    Mood.FOCUS -> Triple(Color(0xFF4F7BFF), Color(0xFF7C4DFF), Color(0xFF3FE0C5))
-    Mood.SLEEPY -> Triple(Color(0xFF3E3A8C), Color(0xFF7E6BFF), Color(0xFF2B6CB0))
-    Mood.CELEBRATE -> Triple(Color(0xFFFFC24B), Color(0xFFC4F25C), Color(0xFFFF7AC6))
+private fun frame(m: Mood) = when (m) {
+    Mood.HAPPY -> R.drawable.rumi_happy
+    Mood.CALM -> R.drawable.rumi_calm
+    Mood.WORRIED -> R.drawable.rumi_worried
+    Mood.FOCUS -> R.drawable.rumi_focus
+    Mood.SLEEPY -> R.drawable.rumi_sleepy
+    Mood.CELEBRATE -> R.drawable.rumi_celebrate
+}
+
+private fun glow(m: Mood) = when (m) {
+    Mood.HAPPY -> Color(0xFFFF9AD5)
+    Mood.CALM -> Color(0xFFB9A8FF)
+    Mood.WORRIED -> Color(0xFFFFB86B)
+    Mood.FOCUS -> Color(0xFF7FB2FF)
+    Mood.SLEEPY -> Color(0xFF7C6BFF)
+    Mood.CELEBRATE -> Color(0xFFFFD36B)
 }
 
 /**
- * Placeholder companion until the mascot art arrives: a softly breathing, swirling
- * gradient orb whose colors follow the user's day.
+ * Rumi, the bubble companion: floats, breathes, blinks, sparkles and changes expression
+ * with the user's day. Tap it for a little celebration.
  */
 @Composable
 fun MoodOrb(mood: Mood, modifier: Modifier = Modifier, size: Dp = 64.dp) {
-    val (a0, b0, c0) = moodColors(mood)
-    val a by animateColorAsState(a0, tween(800), label = "oa")
-    val b by animateColorAsState(b0, tween(800), label = "ob")
-    val cc by animateColorAsState(c0, tween(800), label = "oc")
-    var spin = 0.8f
-    var breath = 1f
-    if (io.github.filipembcruz.rumo.ui.UiFlags.animations) {
-        val t = rememberInfiniteTransition(label = "orb")
-        val sp by t.animateFloat(0f, 6.2832f, infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "spin")
-        val br by t.animateFloat(
-            0.94f, 1.04f,
-            infiniteRepeatable(tween(if (mood == Mood.SLEEPY) 3200 else 2200), RepeatMode.Reverse), label = "breath",
-        )
-        spin = sp
-        breath = br
+    if (!UiFlags.animations) {
+        Box(modifier.size(size), contentAlignment = Alignment.Center) {
+            Image(painterResource(frame(mood)), null, Modifier.fillMaxSize(0.9f))
+        }
+        return
     }
-    Canvas(modifier.size(size)) {
-        val r = this.size.minDimension / 2 * breath
-        val center = Offset(this.size.width / 2, this.size.height / 2)
-        drawCircle(Brush.radialGradient(listOf(a.copy(alpha = 0.35f), Color.Transparent), center, r * 1.25f), r * 1.25f, center)
-        drawCircle(a, r * 0.92f, center)
-        val p1 = Offset(center.x + cos(spin) * r * 0.35f, center.y + sin(spin) * r * 0.35f)
-        val p2 = Offset(center.x + cos(spin + 2.3f) * r * 0.4f, center.y + sin(spin + 2.3f) * r * 0.4f)
-        drawCircle(Brush.radialGradient(listOf(b, b.copy(alpha = 0f)), p1, r * 0.85f), r * 0.92f, center)
-        drawCircle(Brush.radialGradient(listOf(cc, cc.copy(alpha = 0f)), p2, r * 0.75f), r * 0.92f, center)
-        drawCircle(
-            Brush.radialGradient(listOf(Color.White.copy(alpha = 0.75f), Color.White.copy(alpha = 0f)),
-                Offset(center.x - r * 0.35f, center.y - r * 0.4f), r * 0.45f),
-            r * 0.92f, center,
-        )
+    var tapped by remember { mutableStateOf(false) }
+    val shown = if (tapped) Mood.CELEBRATE else mood
+    var blinking by remember { mutableStateOf(false) }
+
+    LaunchedEffect(shown) {
+        blinking = false
+        if (shown == Mood.HAPPY || shown == Mood.CALM) {
+            while (true) {
+                delay(Random.nextLong(2600, 5200))
+                blinking = true
+                delay(140)
+                blinking = false
+                if (Random.nextInt(4) == 0) { delay(160); blinking = true; delay(120); blinking = false }
+            }
+        }
+    }
+    LaunchedEffect(tapped) { if (tapped) { delay(1700); tapped = false } }
+
+    val pop = remember { Animatable(1f) }
+    LaunchedEffect(shown) {
+        pop.snapTo(0.86f)
+        pop.animateTo(1f, spring(dampingRatio = 0.38f, stiffness = 320f))
+    }
+
+    val t = rememberInfiniteTransition(label = "rumi")
+    val float by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(if (shown == Mood.SLEEPY) 4200 else 3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "float")
+    val breathe by t.animateFloat(0.975f, 1.025f, infiniteRepeatable(tween(if (shown == Mood.SLEEPY) 3600 else 2400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breathe")
+    val twinkle by t.animateFloat(0f, 1f, infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "twinkle")
+    val glowColor by animateColorAsState(glow(shown), tween(600), label = "glow")
+    val bounce = if (shown == Mood.CELEBRATE) 1.6f else 1f
+    val boxSize = size
+
+    Box(
+        modifier.size(size).clickable(remember { MutableInteractionSource() }, indication = null) { tapped = true },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val c = Offset(this.size.width / 2, this.size.height / 2 + float * this.size.height * 0.02f)
+            val r = this.size.minDimension / 2
+            drawCircle(Brush.radialGradient(listOf(glowColor.copy(alpha = 0.42f * breathe), Color.Transparent), c, r), r, c)
+            if (this.size.minDimension > 40.dp.toPx()) {
+                for (i in 0 until 5) {
+                    val phase = (twinkle + i / 5f) % 1f
+                    val a = (sin(phase * 2 * PI).toFloat()).coerceAtLeast(0f)
+                    if (a <= 0.02f) continue
+                    val ang = (i * 72 + 20).toDouble() * PI / 180
+                    val p = Offset(c.x + cos(ang).toFloat() * r * 0.9f, c.y + sin(ang).toFloat() * r * 0.88f)
+                    val sz = r * 0.07f * (0.6f + 0.4f * a)
+                    val star = Path().apply {
+                        moveTo(p.x, p.y - sz); lineTo(p.x + sz * 0.28f, p.y - sz * 0.28f); lineTo(p.x + sz, p.y)
+                        lineTo(p.x + sz * 0.28f, p.y + sz * 0.28f); lineTo(p.x, p.y + sz); lineTo(p.x - sz * 0.28f, p.y + sz * 0.28f)
+                        lineTo(p.x - sz, p.y); lineTo(p.x - sz * 0.28f, p.y - sz * 0.28f); close()
+                    }
+                    drawPath(star, Color.White.copy(alpha = 0.85f * a))
+                }
+            }
+        }
+        Crossfade(
+            targetState = if (blinking) R.drawable.rumi_blink else frame(shown),
+            animationSpec = tween(if (blinking) 70 else 280),
+            modifier = Modifier.fillMaxSize(0.86f).graphicsLayer {
+                translationY = float * boxSize.toPx() * 0.035f * bounce
+                scaleX = breathe * pop.value
+                scaleY = (2f - breathe) * pop.value
+            },
+            label = "face",
+        ) { res ->
+            Image(painterResource(res), null, Modifier.fillMaxSize())
+        }
     }
 }
