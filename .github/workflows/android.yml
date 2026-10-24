@@ -50,6 +50,14 @@ jobs:
           rm -f "$RUNNER_TEMP/release.jks"
           cp rumo.apk "rumo-$VERSION-build${{ github.run_number }}.apk"
 
+      - name: Render screenshots (for design review)
+        continue-on-error: true
+        run: |
+          gradle :app:recordRoborazziDebug --no-daemon --stacktrace -PversionCode=${{ github.run_number }} -PversionName=$VERSION > screens.log 2>&1 || (tail -80 screens.log; exit 1)
+          tail -5 screens.log
+          ls -la app/build/screens || true
+          cd app/build/screens && zip -q ../../../screens.zip *.png
+
       - uses: actions/upload-artifact@v4
         with:
           name: rumo-apk
@@ -66,3 +74,5 @@ jobs:
           files: |
             rumo.apk
             rumo-*.apk
+            screens.zip
+            screens.log

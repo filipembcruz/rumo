@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_bg">#0F5C55</color>
+    <color name="ic_bg_start">#8B7BFF</color>
+    <color name="ic_bg_end">#5B3FE6</color>
     <style name="Theme.Rumo" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">@color/window_bg</item>
     </style>
+    <style name="Theme.Rumo.Intervention" parent="Theme.Rumo">
+        <item name="android:windowBackground">@color/intervention_bg</item>
+    </style>
+    <color name="window_bg">#F4F3FB</color>
+    <color name="intervention_bg">#2A1F6B</color>
 </resources>
