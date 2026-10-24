@@ -10,7 +10,7 @@ import io.github.filipembcruz.rumo.data.Schedule
 import io.github.filipembcruz.rumo.data.TargetKind
 import java.time.LocalDateTime
 
-enum class BlockReason { LIMIT, FOCUS, SCHEDULE, PAUSE }
+enum class BlockReason { LIMIT, FOCUS, SCHEDULE, PAUSE, ADULT }
 
 data class Decision(
     val reason: BlockReason,
@@ -64,6 +64,10 @@ object Rules {
         val siteCat = domain?.let { Categorizer.site(context, it) }
         val now = System.currentTimeMillis()
 
+        // 0. adult content (+18)
+        if (prefs.blockAdult && domain != null && io.github.filipembcruz.rumo.data.KnownCategories.isAdult(domain)) {
+            return Decision(BlockReason.ADULT, TargetKind.SITE, domain)
+        }
         // 1. focus session
         if (prefs.focusActive) {
             val cats = prefs.focusCats

@@ -152,6 +152,7 @@ class RumoAccessibilityService : AccessibilityService() {
     private fun tick() {
         val mp = Prefs.get(this).monitoringNotification
         if (mp != lastMonitorPref) { lastMonitorPref = mp; updateMonitorNotification() }
+        runCatching { io.github.filipembcruz.rumo.data.Battery.sample(this) }
         val pkg = current ?: return
         if (!screenOn || pkg == packageName) return
         flushWeb()

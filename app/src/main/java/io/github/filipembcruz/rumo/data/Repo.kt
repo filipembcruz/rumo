@@ -64,7 +64,11 @@ object Repo {
             else -> Insight(InsightKind.UNDER_GOAL, ms = goalMs - total)
         }
 
+        val battery = runCatching { Battery.estimate(context) }.getOrNull()?.let {
+            BatteryUi(it.cycle.startMs, it.cycle.startLevel, it.cycle.level, it.shares)
+        }
         return TodayModel(
+            battery = battery,
             total = total, goalMs = goalMs, yesterday = week[today.minusDays(1).toString()] ?: 0L, avg7 = avg7,
             pickups = pickups, firstUse = db.firstUse(key), productiveMs = prod, distractingMs = dist,
             focusScore = focusScore, hourly = hourly.toList(), apps = apps, sites = sites, cats = cats,
@@ -271,6 +275,7 @@ object Repo {
             opensToday = daily[today.toString()]?.second ?: 0, opens30 = daily.values.sumOf { it.second },
             daily = series, dayLabels = labels, hourly = hourly.toList(), limit = limit,
             pause = kind == TargetKind.APP && id in db.pauseApps(), weekTotal = week, prevWeekTotal = prevWeek,
+            batteryPct = if (kind == TargetKind.APP) runCatching { Battery.estimate(context)?.shares?.get(id) }.getOrNull() else null,
         )
     }
 

@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import io.github.filipembcruz.rumo.ui.components.PopIn
+import io.github.filipembcruz.rumo.ui.components.Appear
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -251,17 +255,20 @@ private fun LostTimeCard(m: GrowthModel, goals: List<LifeGoal>) {
             Spacer(Modifier.height(16.dp))
             Text(s.thatCouldBe, style = MaterialTheme.typography.titleSmall, color = c.onNavy)
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                goals.take(3).forEach { g ->
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                goals.take(3).forEachIndexed { i, g ->
                     Column(
-                        Modifier.weight(1f).clip(RoundedCornerShape(20.dp)).background(Color.White.copy(alpha = 0.08f)).padding(12.dp),
+                        Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(20.dp)).background(Color.White.copy(alpha = 0.08f))
+                            .padding(horizontal = 8.dp, vertical = 14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Icon(g.icon, null, tint = c.lime, modifier = Modifier.size(22.dp))
-                        Spacer(Modifier.height(6.dp))
-                        Text(s.goalAmount(g, projected), style = MaterialTheme.typography.titleMedium, color = c.onNavy)
+                        Icon(g.icon, null, tint = c.lime, modifier = Modifier.size(24.dp))
+                        Spacer(Modifier.height(8.dp))
+                        Text(g.amount(projected), style = MaterialTheme.typography.headlineSmall, color = c.onNavy, textAlign = TextAlign.Center, maxLines = 1)
+                        Text(s.goalUnit(g), style = MaterialTheme.typography.labelMedium, color = c.lime, textAlign = TextAlign.Center, maxLines = 1)
+                        Spacer(Modifier.height(4.dp))
                         Text(s.goalName(g), style = MaterialTheme.typography.labelSmall, color = c.onNavy.copy(alpha = 0.6f),
-                            textAlign = TextAlign.Center, maxLines = 2)
+                            textAlign = TextAlign.Center, maxLines = 2, minLines = 2)
                     }
                 }
             }
@@ -288,27 +295,50 @@ private fun AchievementsGrid(list: List<Achievement>) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         list.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { a ->
-                    Column(
-                        Modifier.weight(1f).clip(RoundedCornerShape(22.dp)).background(c.surface).padding(vertical = 14.dp, horizontal = 8.dp)
-                            .graphicsLayer { alpha = if (a.unlocked) 1f else 0.55f },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Box(
-                            Modifier.size(48.dp).clip(CircleShape)
-                                .background(if (a.unlocked) Brush.linearGradient(listOf(c.amber, Color(0xFFFF8A3D))) else Brush.linearGradient(listOf(c.surfaceAlt, c.surfaceAlt))),
-                            contentAlignment = Alignment.Center,
-                        ) { Icon(achIcon(a.id), null, tint = if (a.unlocked) Color.White else c.muted, modifier = Modifier.size(24.dp)) }
-                        Spacer(Modifier.height(8.dp))
-                        Text(s.achievement(a.id), style = MaterialTheme.typography.labelMedium, color = c.text, textAlign = TextAlign.Center, maxLines = 2,
-                            minLines = 2)
-                        Spacer(Modifier.height(6.dp))
-                        if (!a.unlocked) ProgressLine(a.progress, c.amber, Modifier.padding(horizontal = 8.dp), height = 4.dp)
-                        else Text(s.unlocked, style = MaterialTheme.typography.labelSmall, color = c.amber)
+                row.forEachIndexed { j, a ->
+                    val idx = list.indexOf(a)
+                    Box(Modifier.weight(1f)) {
+                        PopIn(idx, "ach:${a.id}") {
+                            Column(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.surface).padding(vertical = 14.dp, horizontal = 8.dp)
+                                    .graphicsLayer { alpha = if (a.unlocked) 1f else 0.6f },
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
+                                    if (a.unlocked) ShineRing(Modifier.size(56.dp))
+                                    Box(
+                                        Modifier.size(46.dp).clip(CircleShape)
+                                            .background(if (a.unlocked) Brush.linearGradient(listOf(c.amber, Color(0xFFFF8A3D))) else Brush.linearGradient(listOf(c.surfaceAlt, c.surfaceAlt))),
+                                        contentAlignment = Alignment.Center,
+                                    ) { Icon(achIcon(a.id), null, tint = if (a.unlocked) Color.White else c.muted, modifier = Modifier.size(24.dp)) }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                Text(s.achievement(a.id), style = MaterialTheme.typography.labelMedium, color = c.text, textAlign = TextAlign.Center, maxLines = 2,
+                                    minLines = 2)
+                                Spacer(Modifier.height(6.dp))
+                                if (!a.unlocked) ProgressLine(a.progress, c.amber, Modifier.padding(horizontal = 8.dp), height = 4.dp)
+                                else Text(s.unlocked, style = MaterialTheme.typography.labelSmall, color = c.amber)
+                            }
+                        }
                     }
                 }
                 repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
+    }
+}
+
+/** Slowly rotating golden shine around unlocked badges. */
+@Composable
+private fun ShineRing(modifier: Modifier) {
+    if (!io.github.filipembcruz.rumo.ui.UiFlags.animations) return
+    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "shine")
+    val rot by t.animateFloat(0f, 360f, androidx.compose.animation.core.infiniteRepeatable(
+        androidx.compose.animation.core.tween(3200, easing = androidx.compose.animation.core.LinearEasing)), label = "rot")
+    androidx.compose.foundation.Canvas(modifier.graphicsLayer { rotationZ = rot }) {
+        drawCircle(
+            Brush.sweepGradient(listOf(Color.Transparent, Color(0xAAFFC24B), Color.Transparent, Color(0x66FF8A3D), Color.Transparent)),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(3.dp.toPx()),
+        )
     }
 }

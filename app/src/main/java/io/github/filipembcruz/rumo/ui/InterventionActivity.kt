@@ -168,6 +168,7 @@ fun InterventionScreen(
                 BlockReason.FOCUS -> MoodOrb(Mood.FOCUS, size = 150.dp)
                 BlockReason.SCHEDULE -> MoodOrb(Mood.SLEEPY, size = 150.dp)
                 BlockReason.LIMIT -> MoodOrb(Mood.WORRIED, size = 150.dp)
+                BlockReason.ADULT -> MoodOrb(Mood.CALM, size = 150.dp)
             }
             Spacer(Modifier.height(30.dp))
             val title = when (reason) {
@@ -175,12 +176,14 @@ fun InterventionScreen(
                 BlockReason.FOCUS -> s.ivFocusT
                 BlockReason.SCHEDULE -> s.ivScheduleT(schedule)
                 BlockReason.PAUSE -> s.ivPauseT
+                BlockReason.ADULT -> s.ivAdultT
             }
             val body = when (reason) {
                 BlockReason.LIMIT -> s.ivLimitB(Fmt.dur(usedMs), Fmt.dur(limitMin * 60_000L))
                 BlockReason.FOCUS -> s.ivFocusB(name, Fmt.clock(focusUntil))
                 BlockReason.SCHEDULE -> s.ivScheduleB(name)
                 BlockReason.PAUSE -> s.ivPauseB(name, opensToday)
+                BlockReason.ADULT -> s.ivAdultB(name)
             }
             Text(title, style = MaterialTheme.typography.headlineLarge, color = Color.White, textAlign = TextAlign.Center)
             Spacer(Modifier.height(10.dp))

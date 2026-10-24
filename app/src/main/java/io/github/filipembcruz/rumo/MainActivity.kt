@@ -20,6 +20,7 @@ import io.github.filipembcruz.rumo.ui.Strings
 import io.github.filipembcruz.rumo.ui.Tab
 import io.github.filipembcruz.rumo.ui.theme.RumoTheme
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val resumeTick = mutableIntStateOf(0)
@@ -53,6 +54,15 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumeTick.intValue++
         io.github.filipembcruz.rumo.service.BlockerService.ensure(this)
+        runCatching { io.github.filipembcruz.rumo.data.Battery.sample(this) }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val app = applicationContext
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            io.github.filipembcruz.rumo.widget.RumoWidget.refresh(app)
+        }
     }
 
     private fun tabFrom(i: Intent?): Tab? = when (i?.getStringExtra("tab")) {

@@ -72,6 +72,7 @@ import io.github.filipembcruz.rumo.ui.components.EmptyNote
 import io.github.filipembcruz.rumo.ui.components.Heatmap
 import io.github.filipembcruz.rumo.ui.components.IconBadge
 import io.github.filipembcruz.rumo.ui.components.Pill
+import io.github.filipembcruz.rumo.ui.components.PagedColumn
 import io.github.filipembcruz.rumo.ui.components.RCard
 import io.github.filipembcruz.rumo.ui.components.Segmented
 import io.github.filipembcruz.rumo.ui.components.bounceClick
@@ -136,6 +137,7 @@ fun InsightsRoute() {
         onApp = { nav.openDetail(TargetKind.APP, it) },
         onSite = { nav.openDetail(TargetKind.SITE, it) },
         onEnableSites = nav.setupBlocking,
+        minMs = remember(nav.tick) { Prefs.get(context).minListMinutes * 60_000L },
     )
 }
 
@@ -143,7 +145,7 @@ fun InsightsRoute() {
 fun InsightsScreen(
     model: PeriodModel?, range: Range, lifeGoals: List<LifeGoal>, sitesEnabled: Boolean,
     onRange: (Range) -> Unit, onShift: (Int) -> Unit, onCalendar: () -> Unit,
-    onApp: (String) -> Unit, onSite: (String) -> Unit, onEnableSites: () -> Unit,
+    onApp: (String) -> Unit, onSite: (String) -> Unit, onEnableSites: () -> Unit, minMs: Long = 60_000L,
 ) {
     val s = LocalStrings.current
     val c = R2.colors
@@ -184,16 +186,18 @@ fun InsightsScreen(
             AnimatedContent(tab, transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) }, label = "itab") { t ->
                 when (t) {
                     0 -> RCard {
-                        if (model.apps.isEmpty()) EmptyNote(Icons.Rounded.Public, s.noDataTitle, s.noDataBody)
-                        val max = model.apps.firstOrNull()?.ms ?: 1L
-                        model.apps.take(40).forEach { AppUseRow(it, max, model.total) { onApp(it.pkg) } }
+                        val apps = model.apps.filter { it.ms >= minMs }
+                        if (apps.isEmpty()) EmptyNote(Icons.Rounded.Public, s.noDataTitle, s.noDataBody)
+                        val max = apps.firstOrNull()?.ms ?: 1L
+                        PagedColumn(apps, "apps:${model.from}:${model.range}", hidden = model.apps.size - apps.size) { AppUseRow(it, max, model.total) { onApp(it.pkg) } }
                     }
                     1 -> RCard {
                         if (!sitesEnabled) Banner(Icons.Rounded.Public, s.enableSitesBanner, s.enable, c.primarySoft, c.primary, onEnableSites)
                         else if (model.sites.isEmpty()) EmptyNote(Icons.Rounded.Public, s.noSitesTitle, s.noSitesBody)
                         if (!sitesEnabled && model.sites.isNotEmpty()) Spacer(Modifier.height(10.dp))
-                        val max = model.sites.firstOrNull()?.ms ?: 1L
-                        model.sites.take(40).forEach { SiteUseRow(it, max) { onSite(it.domain) } }
+                        val sites = model.sites.filter { it.ms >= minMs }
+                        val max = sites.firstOrNull()?.ms ?: 1L
+                        PagedColumn(sites, "sites:${model.from}:${model.range}", hidden = model.sites.size - sites.size) { SiteUseRow(it, max) { onSite(it.domain) } }
                     }
                     2 -> CategoriesCard(model)
                     else -> PatternsCard(model)
@@ -305,7 +309,7 @@ private fun PatternsCard(m: PeriodModel) {
     val s = LocalStrings.current
     val c = R2.colors
     val locale = LocalLocale.current
-    val days = DayOfWeek.entries.map { it.getDisplayName(TextStyle.SHORT, locale).take(3) }
+    val days = DayOfWeek.values().toList().map { it.getDisplayName(TextStyle.SHORT, locale).take(3) }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         RCard {
             Text(s.whenYouUse, style = MaterialTheme.typography.titleMedium, color = c.text)
@@ -323,7 +327,7 @@ private fun PatternsCard(m: PeriodModel) {
             Text(s.byWeekday, style = MaterialTheme.typography.titleMedium, color = c.text)
             Spacer(Modifier.height(8.dp))
             val best = m.weekdayAvg.indices.maxByOrNull { m.weekdayAvg[it] } ?: -1
-            BarChart(m.weekdayAvg, DayOfWeek.entries.map { it.getDisplayName(TextStyle.NARROW, locale) }, highlight = best, height = 160.dp, color = c.mint)
+            BarChart(m.weekdayAvg, DayOfWeek.values().toList().map { it.getDisplayName(TextStyle.NARROW, locale) }, highlight = best, height = 160.dp, color = c.mint)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             FactTile(s.peakHourTitle, "%02d:00".format(peakHour(m.hourly)), Modifier.weight(1f))

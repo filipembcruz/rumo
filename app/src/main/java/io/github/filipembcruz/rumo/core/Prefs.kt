@@ -10,6 +10,8 @@ import java.time.LocalDate
 class Prefs private constructor(context: Context) {
     private val sp: SharedPreferences = context.getSharedPreferences("rumo", Context.MODE_PRIVATE)
     private val marks: SharedPreferences = context.getSharedPreferences("rumo_marks", Context.MODE_PRIVATE)
+    /** Internal state that should not trigger UI refreshes (battery cycle…). */
+    private val state: SharedPreferences = context.getSharedPreferences("rumo_state", Context.MODE_PRIVATE)
     private val _changes = MutableStateFlow(0)
     val changes: StateFlow<Int> = _changes
 
@@ -46,6 +48,14 @@ class Prefs private constructor(context: Context) {
     // blocking
     var pauseSeconds: Int get() = int("pause_s", 8); set(v) = putInt("pause_s", v)
     var strict: Boolean get() = bool("strict", false); set(v) = putBool("strict", v)
+    var blockAdult: Boolean get() = bool("block_adult", false); set(v) = putBool("block_adult", v)
+
+    // lists
+    var minListMinutes: Int get() = int("min_list_min", 1); set(v) = putInt("min_list_min", v)
+
+    // battery cycle (silent)
+    var cycleStart: Long get() = state.getLong("cycle_start", -1); set(v) { state.edit().putLong("cycle_start", v).apply() }
+    var cycleLevel: Int get() = state.getInt("cycle_level", -1); set(v) { state.edit().putInt("cycle_level", v).apply() }
 
     // focus session
     var focusStart: Long get() = long("focus_start", 0); set(v) = putLong("focus_start", v)

@@ -88,6 +88,8 @@ object Sample {
         productiveMs = 47 * M, distractingMs = 187 * M, focusScore = 58, hourly = hourly, apps = apps, sites = sites, cats = cats,
         focusUntil = 0, streak = 3, sitesEnabled = true,
         insight = Insight(InsightKind.TOP_DISTRACTING, "com.instagram.android", 92 * M), limits = limits,
+        battery = io.github.filipembcruz.rumo.data.BatteryUi(System.currentTimeMillis() - 5 * H, 100, 61,
+            mapOf("com.instagram.android" to 12.4f, "com.brave.browser" to 9.6f, "com.google.android.youtube" to 6.5f, "com.whatsapp" to 5.0f)),
     )
     val heat = (0 until 7).map { d -> (0 until 24).map { h -> if (h < 7) 0f else ((h * 7 + d * 13) % 23 + (if (h in 19..22) 18 else 0)).toFloat() } }
     val period = PeriodModel(
@@ -128,6 +130,7 @@ object Sample {
         opensToday = 34, opens30 = 812,
         daily = (0 until 30).map { ((it * 37) % 60 + 50).toLong() * M }, dayLabels = (0 until 30).map { if (it % 7 == 0) "${it + 1}" else "" },
         hourly = hourly, limit = Limit(1, TargetKind.APP, "com.instagram.android", 90, true), pause = true, weekTotal = 540 * M, prevWeekTotal = 610 * M,
+        batteryPct = 12.4f,
     )
 }
 

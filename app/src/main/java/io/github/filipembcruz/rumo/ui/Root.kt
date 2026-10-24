@@ -84,7 +84,7 @@ class Nav(
     val setupBlocking: () -> Unit = {},
 )
 
-val LocalNav = staticCompositionLocalOf<Nav> { error("no nav") }
+val LocalNav = staticCompositionLocalOf { Nav({ _, _ -> }, {}, {}, {}, {}, 0) }
 val LocalStrings = staticCompositionLocalOf { Strings(false) }
 val LocalLocale = staticCompositionLocalOf { Locale.ENGLISH }
 

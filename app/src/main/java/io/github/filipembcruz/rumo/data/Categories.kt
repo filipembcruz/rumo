@@ -12,6 +12,7 @@ enum class Cat(val id: String, val color: Long, val score: Int) {
     VIDEO("video", 0xFFFF7A45, -1),
     GAMES("games", 0xFFFFB020, -1),
     SHOPPING("shopping", 0xFFE8C547, -1),
+    ADULT("adult", 0xFFD9466F, -1),
     NEWS("news", 0xFF4FB3FF, 0),
     COMMUNICATION("communication", 0xFF22C3A6, 0),
     MUSIC("music", 0xFF2ED47A, 0),
@@ -138,7 +139,34 @@ object KnownCategories {
         "strava.com" to Cat.HEALTH, "myfitnesspal.com" to Cat.HEALTH,
     )
 
+    /** Well-known adult (+18) sites; matched on the domain and its parents. */
+    private val adultSites = setOf(
+        "pornhub.com", "xvideos.com", "xnxx.com", "xhamster.com", "redtube.com", "youporn.com", "tube8.com", "spankbang.com",
+        "brazzers.com", "onlyfans.com", "fansly.com", "chaturbate.com", "stripchat.com", "bongacams.com", "livejasmin.com",
+        "cam4.com", "camsoda.com", "myfreecams.com", "eporner.com", "txxx.com", "hqporner.com", "porntrex.com", "beeg.com",
+        "tnaflix.com", "motherless.com", "rule34.xxx", "e-hentai.org", "nhentai.net", "hentaihaven.xxx", "hanime.tv",
+        "manyvids.com", "clips4sale.com", "erome.com", "fapello.com", "thothub.to", "sxyprn.com", "porn.com", "xxx.com",
+        "sex.com", "adultfriendfinder.com", "literotica.com", "f95zone.to", "mrdeepfakes.com", "camwhores.tv", "redgifs.com",
+        "privacy.com.br", "xvideos.red", "pornpics.com", "imagefap.com", "4tube.com", "drtuber.com", "sunporno.com",
+    )
+    private val adultTlds = setOf("xxx", "porn", "sex", "adult")
+    private val adultWords = listOf("porn", "xvideo", "xnxx", "hentai", "xhamster", "camgirl", "nsfw", "onlyfans", "putaria", "sexcam")
+
+    fun isAdult(domain: String): Boolean {
+        val d = domain.lowercase()
+        if (d.substringAfterLast('.') in adultTlds) return true
+        if (adultWords.any { d.contains(it) }) return true
+        var x = d
+        while (true) {
+            if (x in adultSites) return true
+            val dot = x.indexOf('.')
+            if (dot < 0 || x.indexOf('.', dot + 1) < 0) return false
+            x = x.substring(dot + 1)
+        }
+    }
+
     fun siteCat(domain: String): Cat? {
+        if (isAdult(domain)) return Cat.ADULT
         var d = domain
         while (true) {
             sites[d]?.let { return it }

@@ -85,7 +85,11 @@ data class TodayModel(
     val sitesEnabled: Boolean,
     val insight: Insight,
     val limits: List<LimitStatus>,
+    val battery: BatteryUi? = null,
 )
+
+/** Estimated battery use in the current discharge cycle. */
+data class BatteryUi(val startMs: Long, val startLevel: Int, val level: Int, val shares: Map<String, Float>)
 
 data class LimitStatus(val limit: Limit, val usedMs: Long) {
     val fraction: Float get() = if (limit.minutes <= 0) 0f else usedMs / (limit.minutes * 60_000f)
@@ -135,6 +139,7 @@ data class DetailModel(
     val pause: Boolean,
     val weekTotal: Long,
     val prevWeekTotal: Long,
+    val batteryPct: Float? = null,
 )
 
 data class GoalProgress(val goal: Goal, val doneHours: Double, val weekHours: Double)

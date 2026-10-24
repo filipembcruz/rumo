@@ -326,7 +326,12 @@ fun SelectChip(text: String, selected: Boolean, onClick: () -> Unit, icon: Image
 
 @Composable
 fun ProgressLine(fraction: Float, color: Color, modifier: Modifier = Modifier, track: Color = R2.colors.surfaceAlt, height: Dp = 8.dp) {
-    val f by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(900), label = "pl")
+    val target = fraction.coerceIn(0f, 1f)
+    val anim = remember { androidx.compose.animation.core.Animatable(if (io.github.filipembcruz.rumo.ui.UiFlags.animations) 0f else target) }
+    androidx.compose.runtime.LaunchedEffect(target) {
+        anim.animateTo(target, tween(1000, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+    }
+    val f = anim.value
     Box(modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(50)).background(track)) {
         Box(Modifier.fillMaxWidth(f).fillMaxHeight().clip(RoundedCornerShape(50)).background(color))
     }

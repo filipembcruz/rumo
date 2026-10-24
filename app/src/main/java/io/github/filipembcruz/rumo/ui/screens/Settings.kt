@@ -41,6 +41,8 @@ import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.QueryStats
@@ -207,11 +209,25 @@ fun SettingsRoute() {
             if (v < 0) return@item
             RCard {
                 ToggleRow(Icons.Rounded.Lock, s.strictMode, s.strictModeSub, prefs.strict, { set { prefs.strict = it } }, c.coral)
+                ToggleRow(Icons.Rounded.Block, s.blockAdult, s.blockAdultSub, prefs.blockAdult, {
+                    set { prefs.blockAdult = it }
+                    if (it && !a11yOk) nav.setupBlocking()
+                }, c.coral)
                 var ps by remember { mutableFloatStateOf(prefs.pauseSeconds.toFloat()) }
                 Spacer(Modifier.height(6.dp))
                 Label(Icons.Rounded.Schedule, s.pauseLength(ps.toInt()))
                 Slider(ps, { ps = it.toInt().toFloat() }, valueRange = 3f..30f, onValueChangeFinished = { prefs.pauseSeconds = ps.toInt() },
                     colors = SliderDefaults.colors(thumbColor = c.mint, activeTrackColor = c.mint, inactiveTrackColor = c.surfaceAlt))
+            }
+        }
+        item { Header(s.lists) }
+        item {
+            if (v < 0) return@item
+            RCard {
+                var mm by remember { mutableFloatStateOf(prefs.minListMinutes.toFloat()) }
+                Label(Icons.Rounded.FilterList, s.minListValue(mm.toInt()))
+                Slider(mm, { mm = it.toInt().toFloat() }, valueRange = 0f..15f, onValueChangeFinished = { set { prefs.minListMinutes = mm.toInt() } },
+                    colors = SliderDefaults.colors(thumbColor = c.primary, activeTrackColor = c.primary, inactiveTrackColor = c.surfaceAlt))
             }
         }
         item { Header(s.backupData) }

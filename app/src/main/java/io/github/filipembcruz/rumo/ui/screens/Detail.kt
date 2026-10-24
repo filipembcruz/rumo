@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.SelfImprovement
@@ -143,6 +144,22 @@ fun DetailScreen(
                 BigStat(if (m.kind == TargetKind.APP) s.opensToday else s.visitsToday, "${m.opensToday}", Modifier.weight(1f))
                 val avgSession = if (m.opens30 > 0) m.total30 / m.opens30 else 0L
                 BigStat(s.avgSession, Fmt.dur(avgSession), Modifier.weight(1f))
+            }
+        }
+        m.batteryPct?.let { pct ->
+            item {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.surface).padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconBadge(Icons.Rounded.BatteryChargingFull, c.mint.copy(alpha = 0.15f), c.mint)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(s.batteryThisCharge, style = MaterialTheme.typography.labelMedium, color = c.muted)
+                        Text(s.batteryPct(pct), style = MaterialTheme.typography.headlineSmall, color = c.text)
+                    }
+                    Text(s.estimate, style = MaterialTheme.typography.labelSmall, color = c.muted)
+                }
             }
         }
         item {

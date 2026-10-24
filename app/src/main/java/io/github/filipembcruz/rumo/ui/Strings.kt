@@ -62,6 +62,7 @@ class Strings(val pt: Boolean) {
         Cat.VIDEO -> t("Video & streaming", "Vídeo e streaming")
         Cat.GAMES -> t("Games", "Jogos")
         Cat.SHOPPING -> t("Shopping", "Compras")
+        Cat.ADULT -> t("Adult (+18)", "Adulto (+18)")
         Cat.NEWS -> t("News", "Notícias")
         Cat.COMMUNICATION -> t("Messaging", "Mensagens")
         Cat.MUSIC -> t("Music & audio", "Música e áudio")
@@ -98,6 +99,22 @@ class Strings(val pt: Boolean) {
             else -> a
         }
     }
+
+    fun goalUnit(g: LifeGoal): String = when (g) {
+        LifeGoal.BOOKS -> t("books", "livros")
+        LifeGoal.FITNESS -> t("workouts", "treinos")
+        LifeGoal.SLEEP -> t("nights of sleep", "noites de sono")
+        LifeGoal.FAMILY -> t("evenings", "noites juntos")
+        else -> t("completed", "concluído")
+    }
+
+    val batteryTitle = t("Battery this charge", "Bateria nesta carga")
+    fun batterySub(drained: Int, level: Int, since: String) = t("−$drained% since $since · now $level% · estimate", "−$drained% desde $since · agora $level% · estimativa")
+    fun batteryPct(p: Float) = if (p < 10f) "≈%.1f%%".format(p) else "≈%.0f%%".format(p)
+    val batteryNote = t("Estimated from each app's screen time in this charge. Android doesn't give apps exact per-app battery data.",
+        "Estimado pelo tempo de tela de cada app nesta carga. O Android não fornece o consumo exato por app para outros apps.")
+    val batteryThisCharge = t("Battery since unplugged", "Bateria desde que tirou da tomada")
+    val estimate = t("estimate", "estimativa")
 
     fun achievement(id: String): String = when (id) {
         "first_focus" -> t("First focus", "Primeiro foco")
@@ -341,6 +358,13 @@ class Strings(val pt: Boolean) {
     val nMonitor = t("Show monitoring notification", "Mostrar notificação de monitoramento")
     val nMonitorSub = t("A quiet, permanent notice while Rumo tracks sites", "Um aviso discreto enquanto o Rumo rastreia sites")
     val blocking = t("Blocking", "Bloqueio")
+    val blockAdult = t("Block adult sites (+18)", "Bloquear sites adultos (+18)")
+    val blockAdultSub = t("Always on, in every browser · needs “Sites & blocking”", "Sempre ativo, em qualquer navegador · requer “Sites e bloqueio”")
+    val lists = t("Lists", "Listas")
+    fun minListValue(m: Int) = if (m <= 0) t("Show every app, even for a few seconds", "Mostrar todos os apps, mesmo por segundos")
+        else t("Hide apps and sites used less than $m min", "Ocultar apps e sites usados menos de $m min")
+    val loadMore = t("Load more", "Carregar mais")
+    fun hiddenSmall(n: Int) = t("$n with little use hidden", "$n com pouco uso ocultos")
     val strictMode = t("Strict mode", "Modo rígido")
     val strictModeSub = t("No “5 more minutes”, and focus can only end by holding", "Sem “mais 5 minutos” e o foco só encerra segurando")
     fun pauseLength(sec: Int) = t("Mindful pause: $sec seconds", "Pausa consciente: $sec segundos")
@@ -420,6 +444,8 @@ class Strings(val pt: Boolean) {
     fun ivScheduleT(name: String) = t(if (name.isBlank()) "Not right now" else "$name is on", if (name.isBlank()) "Agora não" else "$name está ativo")
     fun ivScheduleB(n: String) = t("$n is paused during this schedule.", "$n está pausado durante este horário.")
     val ivPauseT = t("Take a breath", "Respire fundo")
+    val ivAdultT = t("This site is blocked", "Este site está bloqueado")
+    fun ivAdultB(d: String) = t("$d is adult content (+18). You turned on blocking for it in Rumo.", "$d tem conteúdo adulto (+18). Você ativou o bloqueio no Rumo.")
     fun ivPauseB(n: String, opens: Int) = t("You've opened $n $opens times today. Is this what you want right now?",
         "Você abriu $n $opens vezes hoje. É isso que você quer agora?")
     fun ivSuggestion(goal: String?) = if (goal != null) t("How about 10 minutes of “$goal” instead?", "Que tal 10 minutos de “$goal” no lugar?")

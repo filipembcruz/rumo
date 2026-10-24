@@ -2,4 +2,6 @@
 <resources>
     <string name="accessibility_label">Rumo – sites e bloqueio</string>
     <string name="accessibility_description">O Rumo usa isto para ver qual app está na tela e o endereço do site no navegador, para contar o tempo por site e mostrar a tela de bloqueio ou de pausa quando um limite, sessão de foco ou horário se aplicar. Nada é enviado para fora: todos os dados ficam neste celular. O Rumo nunca lê o que você digita, suas mensagens ou senhas.</string>
+    <string name="widget_name">Rumo: tempo de tela</string>
+    <string name="widget_desc">Tempo de tela de hoje, apps, sites e limites</string>
 </resources>

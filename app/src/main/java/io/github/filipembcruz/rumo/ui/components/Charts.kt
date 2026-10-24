@@ -102,7 +102,7 @@ fun BarChart(
     val c = R2.colors
     val tm = rememberTextMeasurer()
     val anim = remember(values) { Animatable(if (io.github.filipembcruz.rumo.ui.UiFlags.animations) 0f else 1f) }
-    LaunchedEffect(values) { anim.animateTo(1f, tween(900, easing = FastOutSlowInEasing)) }
+    LaunchedEffect(values) { anim.animateTo(1f, tween(1200, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) }
     val initial = if (highlight in values.indices && values[highlight] > 0) highlight else values.indices.maxByOrNull { values[it] } ?: -1
     var sel by remember(values) { mutableIntStateOf(if ((values.maxOrNull() ?: 0L) > 0) initial else -1) }
     val labelStyle = TextStyle(fontFamily = Inter, fontSize = 10.sp, color = c.muted)
@@ -130,9 +130,12 @@ fun BarChart(
             val left = cx - barW / 2
             val right = cx + barW / 2
             hatchedPill(left, topPad, right, base, c.surfaceAlt, c.hatch)
-            val h = (values[i] / maxV) * chartH * anim.value
-            if (values[i] > 0) {
-                val top = base - max(h, barW * 0.9f * anim.value)
+            val stagger = 0.5f / n
+            val p = ((anim.value * (1f + 0.5f) - i * stagger) / 1f).coerceIn(0f, 1f)
+            val eased = 1f - (1f - p) * (1f - p) * (1f - p)
+            val h = (values[i] / maxV) * chartH * eased
+            if (values[i] > 0 && eased > 0f) {
+                val top = base - max(h, barW * 0.9f * eased)
                 val brush = if (i == sel || (sel < 0 && i == highlight))
                     Brush.verticalGradient(listOf(color, color.copy(alpha = 0.85f)), top, base)
                 else Brush.verticalGradient(listOf(color.copy(alpha = 0.42f), color.copy(alpha = 0.30f)), top, base)
@@ -286,7 +289,10 @@ fun Heatmap(rows: List<List<Float>>, dayLabels: List<String>, modifier: Modifier
 fun Ring(fraction: Float, modifier: Modifier = Modifier, size: Dp = 150.dp, thickness: Dp = 14.dp,
          track: Color = Color.White.copy(alpha = 0.18f), colors: List<Color> = listOf(R2.colors.lime, R2.colors.lime),
          over: Color = R2.colors.coral, content: @Composable () -> Unit = {}) {
-    val f by animateFloatAsState(fraction.coerceIn(0f, 2f), tween(1200, easing = FastOutSlowInEasing), label = "ring")
+    val target = fraction.coerceIn(0f, 2f)
+    val anim = remember { Animatable(if (io.github.filipembcruz.rumo.ui.UiFlags.animations) 0f else target) }
+    LaunchedEffect(target) { anim.animateTo(target, tween(1400, easing = FastOutSlowInEasing)) }
+    val f = anim.value
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(size)) {
             val s = thickness.toPx()

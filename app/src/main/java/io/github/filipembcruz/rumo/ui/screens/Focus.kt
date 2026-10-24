@@ -208,6 +208,7 @@ fun FocusScreen(m: FocusModel, a: FocusActions) {
                 }
             }
         }
+        item { AdultCard(m.accessibility) }
         item { SectionHeader(s.schedules, s.add) { a.onSchedule(null) } }
         if (m.schedules.isEmpty()) item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -401,3 +402,20 @@ private fun ScheduleCard(sc: Schedule, a: FocusActions) {
     }
 }
 
+
+@Composable
+private fun AdultCard(canBlock: Boolean) {
+    val s = LocalStrings.current
+    val c = R2.colors
+    val context = LocalContext.current
+    val nav = io.github.filipembcruz.rumo.ui.LocalNav.current
+    val prefs = remember { Prefs.get(context) }
+    var on by remember { mutableStateOf(prefs.blockAdult) }
+    RCard {
+        io.github.filipembcruz.rumo.ui.components.ToggleRow(Icons.Rounded.Shield, s.blockAdult, s.blockAdultSub, on, {
+            on = it
+            prefs.blockAdult = it
+            if (it && !Perms.accessibility(context)) nav.setupBlocking()
+        }, c.coral)
+    }
+}

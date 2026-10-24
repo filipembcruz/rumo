@@ -74,6 +74,35 @@ object Collector {
         return m
     }
 
+    /** Foreground ms per package between [from] and now (any length, e.g. the current battery cycle). */
+    fun usageSince(context: Context, from: Long): Map<String, Long> {
+        if (!hasPermission(context)) return emptyMap()
+        val usm = context.getSystemService(UsageStatsManager::class.java) ?: return emptyMap()
+        val excluded = excluded(context)
+        val now = System.currentTimeMillis()
+        val events = usm.queryEvents(from - LOOKBACK_MS, now)
+        val out = HashMap<String, Long>()
+        var current: String? = null
+        var start = 0L
+        fun close(at: Long) {
+            val p = current ?: return
+            val s = maxOf(start, from)
+            if (at > s && p !in excluded) out[p] = (out[p] ?: 0L) + (at - s)
+            current = null
+        }
+        val e = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            when (e.eventType) {
+                RESUMED -> { if (current != e.packageName) close(e.timeStamp); if (current == null) { current = e.packageName; start = e.timeStamp } }
+                PAUSED -> if (current == e.packageName) close(e.timeStamp)
+                SCREEN_OFF, SHUTDOWN -> close(e.timeStamp)
+            }
+        }
+        close(now)
+        return out
+    }
+
     private fun collect(context: Context, day: LocalDate, excluded: Set<String>): DayData {
         val zone = ZoneId.systemDefault()
         val start = day.atStartOfDay(zone).toInstant().toEpochMilli()

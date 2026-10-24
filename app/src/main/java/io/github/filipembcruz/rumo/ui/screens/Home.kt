@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material.icons.rounded.BatteryChargingFull
+import io.github.filipembcruz.rumo.ui.components.Appear
+import io.github.filipembcruz.rumo.ui.components.rememberCountUp
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -134,7 +139,7 @@ fun HomeRoute() {
         onLimit = { limitTarget = it.kind to it.target },
     )
     if (model == null) { LoadingScreen(); return }
-    HomeScreen(model, prefs.name, actions)
+    HomeScreen(model, prefs.name, actions, prefs.minListMinutes * 60_000L)
 
     when (sheet) {
         "log" -> {
@@ -152,30 +157,34 @@ fun HomeRoute() {
 }
 
 @Composable
-fun HomeScreen(m: TodayModel, name: String, a: HomeActions) {
+fun HomeScreen(m: TodayModel, name: String, a: HomeActions, minMs: Long = 60_000L) {
     val s = LocalStrings.current
     val c = R2.colors
+    val apps = m.apps.filter { it.ms >= minMs }
+    val sites = m.sites.filter { it.ms >= minMs }
     LazyColumn(
         Modifier.fillMaxSize().background(c.bg),
         contentPadding = PaddingValues(horizontal = 18.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { HomeHeader(name, a.onSettings) }
-        item { Appear(0) { HeroCard(m) } }
-        item { Appear(1) { InsightCard(m.insight, m, a) } }
-        item {
-            Appear(2) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatTile(Icons.Rounded.Bolt, s.focusScore, "${m.focusScore}", c.primary, c.primarySoft, Modifier.weight(1f), sub = s.scoreLabel(m.focusScore))
-                    StatTile(Icons.Rounded.TouchApp, s.pickups, "${m.pickups}", c.amber, c.amber.copy(alpha = 0.16f), Modifier.weight(1f),
-                        sub = m.firstUse?.let { s.firstAt(Fmt.clock(it)) })
-                    StatTile(Icons.Rounded.WbSunny, s.productive, Fmt.dur(m.productiveMs), c.mint, c.mint.copy(alpha = 0.16f), Modifier.weight(1f),
+        item(key = "header") { HomeHeader(name, a.onSettings) }
+        item(key = "hero") { Appear(0, "home:hero") { HeroCard(m) } }
+        item(key = "insight") { Appear(1, "home:insight") { InsightCard(m.insight, m, a) } }
+        item(key = "stats") {
+            Appear(2, "home:stats") {
+                val score = rememberCountUp(m.focusScore, "home:score")
+                val pickups = rememberCountUp(m.pickups, "home:pickups")
+                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatTile(Icons.Rounded.Bolt, s.focusScore, "$score", c.primary, c.primarySoft, Modifier.weight(1f).fillMaxHeight(), sub = s.scoreLabel(m.focusScore))
+                    StatTile(Icons.Rounded.TouchApp, s.pickups, "$pickups", c.amber, c.amber.copy(alpha = 0.16f), Modifier.weight(1f).fillMaxHeight(),
+                        sub = m.firstUse?.let { s.firstAt(Fmt.clock(it)) } ?: " ")
+                    StatTile(Icons.Rounded.WbSunny, s.productive, Fmt.dur(m.productiveMs), c.mint, c.mint.copy(alpha = 0.16f), Modifier.weight(1f).fillMaxHeight(),
                         sub = s.distractingShort(Fmt.dur(m.distractingMs)), subColor = c.coral)
                 }
             }
         }
-        item {
-            Appear(3) {
+        item(key = "hourly") {
+            Appear(3, "home:hourly") {
                 RCard {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(s.todayByHour, style = MaterialTheme.typography.titleMedium, color = c.text, modifier = Modifier.weight(1f))
@@ -186,8 +195,8 @@ fun HomeScreen(m: TodayModel, name: String, a: HomeActions) {
                 }
             }
         }
-        if (m.cats.isNotEmpty()) item {
-            Appear(4) {
+        if (m.cats.isNotEmpty()) item(key = "cats") {
+            Appear(4, "home:cats") {
                 RCard {
                     Text(s.whereTimeWent, style = MaterialTheme.typography.titleMedium, color = c.text)
                     Spacer(Modifier.height(14.dp))
@@ -201,48 +210,90 @@ fun HomeScreen(m: TodayModel, name: String, a: HomeActions) {
                             Text(Fmt.dur(cu.ms), style = MaterialTheme.typography.labelLarge, color = c.text)
                             Spacer(Modifier.width(8.dp))
                             Text("${(cu.ms * 100 / m.total.coerceAtLeast(1)).toInt()}%", style = MaterialTheme.typography.labelMedium, color = c.muted,
-                                modifier = Modifier.width(36.dp))
+                                modifier = Modifier.width(36.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End)
                         }
                     }
                 }
             }
         }
-        if (m.limits.isNotEmpty()) item {
-            RCard {
-                SectionHeader(s.limitsToday)
-                m.limits.forEach { LimitRow(it) { a.onLimit(it.limit) } }
+        m.battery?.let { b -> if (b.shares.isNotEmpty()) item(key = "battery") { Appear(5, "home:battery") { BatteryCard(b) { a.onApp(it) } } } }
+        if (m.limits.isNotEmpty()) item(key = "limits") {
+            Appear(6, "home:limits") {
+                RCard {
+                    SectionHeader(s.limitsToday)
+                    m.limits.forEach { LimitRow(it) { a.onLimit(it.limit) } }
+                }
             }
         }
-        item {
-            Appear(5) {
+        item(key = "apps") {
+            Appear(7, "home:apps") {
                 RCard {
                     SectionHeader(s.topApps, s.seeAll, a.onSeeAll)
-                    if (m.apps.isEmpty()) Text(s.noAppsYet, style = MaterialTheme.typography.bodyMedium, color = c.muted)
-                    val max = m.apps.firstOrNull()?.ms ?: 1L
-                    m.apps.take(5).forEach { AppUseRow(it, max, m.total) { a.onApp(it.pkg) } }
+                    if (apps.isEmpty()) Text(s.noAppsYet, style = MaterialTheme.typography.bodyMedium, color = c.muted)
+                    val max = apps.firstOrNull()?.ms ?: 1L
+                    apps.take(10).forEach { AppUseRow(it, max, m.total, m.battery?.shares?.get(it.pkg)) { a.onApp(it.pkg) } }
                 }
             }
         }
-        item {
-            RCard {
-                SectionHeader(s.topSites, if (m.sites.isNotEmpty()) s.seeAll else null, a.onSeeAll)
-                if (!m.sitesEnabled) {
-                    Banner(Icons.Rounded.Public, s.enableSitesBanner, s.enable, c.primarySoft, c.primary, a.onEnableSites)
-                } else if (m.sites.isEmpty()) {
-                    Text(s.noSitesYet, style = MaterialTheme.typography.bodyMedium, color = c.muted)
+        item(key = "sites") {
+            Appear(8, "home:sites") {
+                RCard {
+                    SectionHeader(s.topSites, if (sites.isNotEmpty()) s.seeAll else null, a.onSeeAll)
+                    if (!m.sitesEnabled) {
+                        Banner(Icons.Rounded.Public, s.enableSitesBanner, s.enable, c.primarySoft, c.primary, a.onEnableSites)
+                    } else if (sites.isEmpty()) {
+                        Text(s.noSitesYet, style = MaterialTheme.typography.bodyMedium, color = c.muted)
+                    }
+                    if (!m.sitesEnabled && sites.isNotEmpty()) Spacer(Modifier.height(10.dp))
+                    val max = sites.firstOrNull()?.ms ?: 1L
+                    sites.take(10).forEach { SiteUseRow(it, max) { a.onSite(it.domain) } }
                 }
-                val max = m.sites.firstOrNull()?.ms ?: 1L
-                m.sites.take(5).forEach { SiteUseRow(it, max) { a.onSite(it.domain) } }
             }
         }
-        item {
+        item(key = "quick") {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickAction(Icons.Rounded.HourglassTop, s.startFocus, c.primary, Modifier.weight(1f), a.onFocus)
                 QuickAction(Icons.Rounded.EditNote, s.logActivity, c.mint, Modifier.weight(1f), a.onLog)
                 QuickAction(Icons.Rounded.Add, s.addLimit, c.coral, Modifier.weight(1f), a.onAddLimit)
             }
         }
-        item { BottomSpacer() }
+        item(key = "bottom") { BottomSpacer() }
+    }
+}
+
+@Composable
+private fun BatteryCard(b: io.github.filipembcruz.rumo.data.BatteryUi, onApp: (String) -> Unit) {
+    val s = LocalStrings.current
+    val c = R2.colors
+    val drained = (b.startLevel - b.level).coerceAtLeast(0)
+    RCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(Icons.Rounded.BatteryChargingFull, c.mint.copy(alpha = 0.15f), c.mint)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(s.batteryTitle, style = MaterialTheme.typography.titleMedium, color = c.text)
+                Text(s.batterySub(drained, b.level, Fmt.clock(b.startMs)), style = MaterialTheme.typography.bodySmall, color = c.muted)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        val top = b.shares.entries.sortedByDescending { it.value }.take(4)
+        val max = top.firstOrNull()?.value ?: 1f
+        val context = LocalContext.current
+        top.forEach { (pkg, pct) ->
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).bounceClick { onApp(pkg) }.padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                AppIcon(pkg, 30.dp)
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(remember(pkg) { AppNames.label(context, pkg) }, style = MaterialTheme.typography.labelLarge, color = c.text, maxLines = 1)
+                    Spacer(Modifier.height(4.dp))
+                    ProgressLine(pct / max, c.mint, height = 5.dp)
+                }
+                Spacer(Modifier.width(10.dp))
+                Text(s.batteryPct(pct), style = MaterialTheme.typography.labelLarge, color = c.mint)
+            }
+        }
+        Text(s.batteryNote, style = MaterialTheme.typography.labelSmall, color = c.muted, modifier = Modifier.padding(top = 6.dp))
     }
 }
 
@@ -377,7 +428,7 @@ private fun InsightCard(i: Insight, m: TodayModel, a: HomeActions) {
 }
 
 @Composable
-fun AppUseRow(app: AppUse, max: Long, total: Long, onClick: () -> Unit) {
+fun AppUseRow(app: AppUse, max: Long, total: Long, batteryPct: Float? = null, onClick: () -> Unit) {
     val s = LocalStrings.current
     val c = R2.colors
     val context = LocalContext.current
@@ -400,6 +451,7 @@ fun AppUseRow(app: AppUse, max: Long, total: Long, onClick: () -> Unit) {
                 Text(s.cat(app.cat), style = MaterialTheme.typography.labelSmall, color = app.cat.color())
                 if (app.opens > 0) Text(" · ${s.opens(app.opens)}", style = MaterialTheme.typography.labelSmall, color = c.muted)
                 if (total > 0) Text(" · ${(app.ms * 100 / total).toInt()}%", style = MaterialTheme.typography.labelSmall, color = c.muted)
+                if (batteryPct != null && batteryPct >= 0.5f) Text(" · ${s.batteryPct(batteryPct)} 🔋", style = MaterialTheme.typography.labelSmall, color = c.mint)
             }
         }
     }
@@ -478,17 +530,6 @@ private fun QuickAction(icon: androidx.compose.ui.graphics.vector.ImageVector, l
         Spacer(Modifier.height(8.dp))
         Text(label, style = MaterialTheme.typography.labelMedium, color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
-}
-
-/** Staggered entrance for cards. */
-@Composable
-fun Appear(index: Int, content: @Composable () -> Unit) {
-    var shown by remember { mutableStateOf(!io.github.filipembcruz.rumo.ui.UiFlags.animations) }
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(40L * index)
-        shown = true
-    }
-    AnimatedVisibility(shown, enter = fadeIn(tween(380)) + slideInVertically(tween(420)) { it / 6 }) { content() }
 }
 
 @Composable
