@@ -70,7 +70,8 @@ jobs:
           name: Rumo ${{ env.VERSION }} (build ${{ github.run_number }})
           make_latest: true
           body: |
-            📱 Baixe o `rumo.apk` abaixo e abra no celular Android para instalar.
+            📱 Download `rumo.apk` below and open it on your Android phone to install.
+            Updates install over the previous version and keep your data.
           files: |
             rumo.apk
             rumo-*.apk
