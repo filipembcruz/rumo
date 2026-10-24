@@ -113,8 +113,15 @@ fun OnboardingRoute(onDone: () -> Unit) {
     }
 
     fun go(to: Int) { forward = to > step; step = to.coerceIn(0, STEPS - 1) }
-    BackHandler(enabled = step > 0) { go(step - 1) }
-    LaunchedEffect(usage, step) { if (step == 3 && usage) go(4) }
+    // Going back skips the permission step once access is granted.
+    fun back() { go(if (step == 4 && usage) 2 else step - 1) }
+    BackHandler(enabled = step > 0) { back() }
+    // Auto-advance only when access was just granted on the permission step.
+    var wasGranted by remember { mutableStateOf(usage) }
+    LaunchedEffect(usage) {
+        if (usage && !wasGranted && step == 3) go(4)
+        wasGranted = usage
+    }
 
     OnboardingScreen(
         step = step, forward = forward, lang = lang, name = name, goals = goals, goalMin = goalMin.toInt(),
@@ -124,17 +131,17 @@ fun OnboardingRoute(onDone: () -> Unit) {
         onToggleGoal = { id -> goals = if (id in goals) goals - id else goals + id },
         onGoalMin = { goalMin = it.toFloat() },
         onUsage = { Perms.openUsageSettings(context) },
-        onA11y = { Perms.openAccessibilitySettings(context) },
+        onA11y = nav.setupBlocking,
         onNotif = {
             if (Build.VERSION.SDK_INT >= 33) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) else Perms.openNotificationSettings(context)
         },
-        onBack = { go(step - 1) },
+        onBack = { back() },
         onNext = {
             when (step) {
                 1 -> { prefs.name = name.trim(); prefs.lifeGoals = goals }
                 2 -> prefs.dailyGoalMin = goalMin.toInt()
             }
-            if (step == STEPS - 1) onDone() else go(step + 1)
+            if (step == STEPS - 1) onDone() else go(if (step == 2 && usage) 4 else step + 1)
         },
     )
 }

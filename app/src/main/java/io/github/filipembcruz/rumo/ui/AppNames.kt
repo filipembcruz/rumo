@@ -20,7 +20,7 @@ object AppNames {
         }.getOrDefault(fallback(pkg))
     }
 
-    private val generic = setOf("com", "org", "net", "io", "br", "android", "app", "apps", "mobile", "www", "github", "google", "client", "lite")
+    private val generic = setOf("com", "org", "net", "io", "br", "android", "app", "apps", "mobile", "www", "github", "google", "client", "lite", "id", "app", "free", "pro")
 
     fun fallback(pkg: String): String {
         val parts = pkg.split('.').filter { it.isNotBlank() && it.lowercase() !in generic }

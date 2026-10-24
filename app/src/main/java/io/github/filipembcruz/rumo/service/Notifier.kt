@@ -41,9 +41,8 @@ object Notifier {
         return PendingIntent.getActivity(context, tab.hashCode(), i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    fun post(context: Context, channel: String, id: Int, title: String, body: String, tab: String? = null, ongoing: Boolean = false) {
-        if (!Perms.notifications(context)) return
-        val n = NotificationCompat.Builder(context, channel)
+    fun build(context: Context, channel: String, title: String, body: String, tab: String? = null, ongoing: Boolean = false): android.app.Notification =
+        NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_rumo)
             .setColor(0xFF6B4EFF.toInt())
             .setContentTitle(title)
@@ -55,6 +54,10 @@ object Notifier {
             .setSilent(ongoing)
             .setPriority(if (channel == CH_LIMITS) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
             .build()
+
+    fun post(context: Context, channel: String, id: Int, title: String, body: String, tab: String? = null, ongoing: Boolean = false) {
+        if (!Perms.notifications(context)) return
+        val n = build(context, channel, title, body, tab, ongoing)
         runCatching { NotificationManagerCompat.from(context).notify(id, n) }
     }
 

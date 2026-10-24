@@ -22,6 +22,15 @@ object Perms {
         }
     }
 
+    fun overlay(context: Context) = Settings.canDrawOverlays(context)
+
+    fun openOverlaySettings(context: Context) = start(
+        context, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+    )
+
+    /** Some way to interrupt apps is available. */
+    fun canBlock(context: Context) = accessibility(context) || overlay(context)
+
     fun openUsageSettings(context: Context) = start(context, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
 
     fun openAccessibilitySettings(context: Context) = start(context, Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))

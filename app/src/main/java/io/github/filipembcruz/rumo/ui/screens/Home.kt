@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 
 package io.github.filipembcruz.rumo.ui.screens
 
@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.HourglassTop
+import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.TouchApp
@@ -129,7 +130,7 @@ fun HomeRoute() {
         onFocus = { nav.goTab(Tab.FOCUS) },
         onLog = { sheet = "log" },
         onAddLimit = { sheet = "pick" },
-        onEnableSites = { Perms.openAccessibilitySettings(context) },
+        onEnableSites = nav.setupBlocking,
         onLimit = { limitTarget = it.kind to it.target },
     )
     if (model == null) { LoadingScreen(); return }
@@ -169,7 +170,7 @@ fun HomeScreen(m: TodayModel, name: String, a: HomeActions) {
                     StatTile(Icons.Rounded.TouchApp, s.pickups, "${m.pickups}", c.amber, c.amber.copy(alpha = 0.16f), Modifier.weight(1f),
                         sub = m.firstUse?.let { s.firstAt(Fmt.clock(it)) })
                     StatTile(Icons.Rounded.WbSunny, s.productive, Fmt.dur(m.productiveMs), c.mint, c.mint.copy(alpha = 0.16f), Modifier.weight(1f),
-                        sub = s.distractingShort(Fmt.dur(m.distractingMs)))
+                        sub = s.distractingShort(Fmt.dur(m.distractingMs)), subColor = c.coral)
                 }
             }
         }
@@ -302,13 +303,15 @@ fun HeroCard(m: TodayModel) {
                 }
             }
             Spacer(Modifier.height(18.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 if (change != null) {
                     Pill(s.vsYesterday(Fmt.signedPct(change)), Color.White.copy(alpha = 0.16f), Color.White,
                         icon = if (change > 0) Icons.Rounded.TrendingUp else Icons.Rounded.TrendingDown)
                 }
                 if (m.avg7 > 0) Pill(s.avg7(Fmt.dur(m.avg7)), Color.White.copy(alpha = 0.16f), Color.White)
-                if (m.streak > 0) Pill(s.streakShort(m.streak), c.lime, c.onLime)
+                if (m.streak > 0) Pill(s.streakShort(m.streak), c.lime, c.onLime, icon = Icons.Rounded.LocalFireDepartment)
             }
         }
     }

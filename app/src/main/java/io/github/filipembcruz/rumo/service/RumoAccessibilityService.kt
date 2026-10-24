@@ -18,7 +18,6 @@ import io.github.filipembcruz.rumo.data.Db
 import io.github.filipembcruz.rumo.data.TargetKind
 import io.github.filipembcruz.rumo.ui.AppNames
 import io.github.filipembcruz.rumo.ui.Fmt
-import io.github.filipembcruz.rumo.ui.InterventionActivity
 import java.time.LocalDate
 
 /**
@@ -36,8 +35,6 @@ class RumoAccessibilityService : AccessibilityService() {
     private var lastUrlCheck = 0L
     private var distractingSince = 0L
     private var lastNudge = 0L
-    private var lastLaunch = 0L
-    private var lastLaunchKey = ""
     private var screenOn = true
     private var imes: Set<String> = emptySet()
 
@@ -69,11 +66,14 @@ class RumoAccessibilityService : AccessibilityService() {
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_USER_PRESENT)
         }
-        if (Build.VERSION.SDK_INT >= 33) registerReceiver(screenReceiver, filter, RECEIVER_NOT_EXPORTED) else registerReceiver(screenReceiver, filter)
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 33) registerReceiver(screenReceiver, filter, RECEIVER_NOT_EXPORTED) else registerReceiver(screenReceiver, filter)
+        }
         bg.postDelayed(ticker, TICK_MS)
         lastMonitorPref = Prefs.get(this).monitoringNotification
-        updateMonitorNotification()
+        runCatching { updateMonitorNotification() }
         running = true
+        runCatching { stopService(Intent(this, BlockerService::class.java)) }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -169,21 +169,7 @@ class RumoAccessibilityService : AccessibilityService() {
         if (Rules.isSafe(this, pkg)) return
         val apps = Collector.todayLive(this)
         val decision = Rules.evaluate(this, pkg, d, apps, siteToday()) ?: return
-        val now = System.currentTimeMillis()
-        val key = "${decision.reason}:${decision.target}"
-        if (key == lastLaunchKey && now - lastLaunch < 4000) return
-        lastLaunch = now
-        lastLaunchKey = key
-        val intent = Intent(this, InterventionActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            .putExtra(InterventionActivity.EXTRA_REASON, decision.reason.name)
-            .putExtra(InterventionActivity.EXTRA_KIND, decision.targetKind.id)
-            .putExtra(InterventionActivity.EXTRA_TARGET, decision.target)
-            .putExtra(InterventionActivity.EXTRA_PKG, pkg)
-            .putExtra(InterventionActivity.EXTRA_USED, decision.usedMs)
-            .putExtra(InterventionActivity.EXTRA_LIMIT, decision.limit?.minutes ?: 0)
-            .putExtra(InterventionActivity.EXTRA_SCHEDULE, decision.schedule?.name ?: "")
-        main.post { runCatching { startActivity(intent) } }
+        main.post { Interventions.launch(this, decision, pkg) }
     }
 
     private fun alerts() {

@@ -131,13 +131,13 @@ fun IconBadge(icon: ImageVector, bg: Color, fg: Color, size: Dp = 40.dp, iconSiz
 }
 
 @Composable
-fun StatTile(icon: ImageVector, label: String, value: String, accent: Color, accentBg: Color, modifier: Modifier = Modifier, sub: String? = null) {
+fun StatTile(icon: ImageVector, label: String, value: String, accent: Color, accentBg: Color, modifier: Modifier = Modifier, sub: String? = null, subColor: Color = accent) {
     RCard(modifier, padding = PaddingValues(16.dp), shape = RoundedCornerShape(24.dp)) {
         IconBadge(icon, accentBg, accent, 34.dp, 18.dp)
         Spacer(Modifier.height(12.dp))
         Text(value, style = MaterialTheme.typography.titleLarge, color = R2.colors.text, maxLines = 1)
         Text(label, style = MaterialTheme.typography.labelMedium, color = R2.colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = accent, maxLines = 1)
+        if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = subColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

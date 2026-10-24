@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         resumeTick.intValue++
+        io.github.filipembcruz.rumo.service.BlockerService.ensure(this)
     }
 
     private fun tabFrom(i: Intent?): Tab? = when (i?.getStringExtra("tab")) {

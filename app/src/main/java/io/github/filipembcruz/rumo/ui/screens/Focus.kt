@@ -140,7 +140,7 @@ fun FocusRoute() {
         FocusModel(
             until = p.focusUntil, start = p.focusStart, cats = p.focusCats, apps = p.focusApps, strict = p.strict,
             schedules = db.schedules(), limits = Repo.limitStatuses(context), pauseApps = db.pauseApps(),
-            goals = db.goals(), accessibility = Perms.accessibility(context),
+            goals = db.goals(), accessibility = Perms.canBlock(context),
         )
     }
     var sheet by remember { mutableStateOf<String?>(null) }
@@ -159,7 +159,7 @@ fun FocusRoute() {
         onLimit = { limitTarget = it.limit.kind to it.limit.target },
         onAddPause = { sheet = "pause" },
         onApp = { nav.openDetail(TargetKind.APP, it) },
-        onEnableBlocking = { Perms.openAccessibilitySettings(context) },
+        onEnableBlocking = nav.setupBlocking,
     ))
     when (sheet) {
         "block" -> BlockListSheet(model.cats, model.apps, onDismiss = { sheet = null; nav.refresh() })

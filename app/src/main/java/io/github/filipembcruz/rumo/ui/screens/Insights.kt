@@ -135,7 +135,7 @@ fun InsightsRoute() {
         onCalendar = { showPicker = true },
         onApp = { nav.openDetail(TargetKind.APP, it) },
         onSite = { nav.openDetail(TargetKind.SITE, it) },
-        onEnableSites = { Perms.openAccessibilitySettings(context) },
+        onEnableSites = nav.setupBlocking,
     )
 }
 
@@ -200,7 +200,7 @@ fun InsightsScreen(
                 }
             }
         }
-        item { EquivalenceCard(model.distractingMs, model.days, lifeGoals) }
+        item { EquivalenceCard((model.total - model.productiveMs).coerceAtLeast(0), model.days, lifeGoals) }
         item { BottomSpacer() }
     }
 }

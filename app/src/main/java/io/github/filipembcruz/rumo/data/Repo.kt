@@ -315,13 +315,14 @@ object Repo {
         val yearFrom = today.withDayOfYear(1)
         val yApps = db.appTotals(yearFrom.toString(), today.toString()).map { AppUse(it.first, it.second, 0, Categorizer.app(context, it.first)) }
         val ySites = db.webTotals(yearFrom.toString(), today.toString()).map { SiteUse(it.first, it.second, 0, Categorizer.site(context, it.first)) }
-        val yearDist = balance(yApps, ySites).second
+        // "Lost" time = all screen time that wasn't productive (browser time counts unless its sites were productive).
+        val yearDist = (yApps.sumOf { it.ms } - balance(yApps, ySites).first).coerceAtLeast(0)
         val mFrom = today.minusDays(29)
         val mApps = db.appTotals(mFrom.toString(), today.toString()).map { AppUse(it.first, it.second, 0, Categorizer.app(context, it.first)) }
         val mSites = db.webTotals(mFrom.toString(), today.toString()).map { SiteUse(it.first, it.second, 0, Categorizer.site(context, it.first)) }
         val firstDay = db.firstDay()?.let { LocalDate.parse(it) } ?: today
         val trackedDays = (ChronoUnit.DAYS.between(if (firstDay.isAfter(mFrom)) firstDay else mFrom, today) + 1).coerceAtLeast(1)
-        val projected = balance(mApps, mSites).second / trackedDays * 365
+        val projected = (mApps.sumOf { it.ms } - balance(mApps, mSites).first).coerceAtLeast(0) / trackedDays * 365
 
         val streak = streak(context, goalMs)
         val best = max(bestStreak(context, goalMs), streak)

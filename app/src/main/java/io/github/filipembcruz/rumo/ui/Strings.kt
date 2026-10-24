@@ -133,10 +133,10 @@ class Strings(val pt: Boolean) {
     fun overGoal(d: String) = t("$d over your goal", "$d acima da meta")
     fun vsYesterday(p: String) = t("$p vs yesterday", "$p vs ontem")
     fun avg7(d: String) = t("7-day avg $d", "Média 7 dias $d")
-    fun streakShort(n: Int) = t("🔥 $n-day streak", "🔥 $n dias seguidos")
+    fun streakShort(n: Int) = t("$n-day streak", "$n dias seguidos")
     val focusScore = t("Focus score", "Nota de foco")
     fun firstAt(clock: String) = t("First at $clock", "1º às $clock")
-    fun distractingShort(d: String) = t("$d distracting", "$d em distração")
+    fun distractingShort(d: String) = t("$d distracting", "$d distração")
     val todayByHour = t("Today by hour", "Hoje por hora")
     fun peakAt(h: Int) = t("Peak %02d:00".format(h), "Pico %02d:00".format(h))
     val whereTimeWent = t("Where your time went", "Para onde foi seu tempo")
@@ -197,8 +197,8 @@ class Strings(val pt: Boolean) {
     val pickupsPerDay = t("Pickups per day", "Desbloqueios por dia")
     val longestDay = t("Longest day", "Dia mais longo")
     val couldHaveBeen = t("This time could have been…", "Esse tempo poderia ter virado…")
-    fun couldHaveBeenSub(h: String, y: String) = t("$h of distracting time in this period · $y per year at this pace",
-        "$h de distração neste período · $y por ano nesse ritmo")
+    fun couldHaveBeenSub(h: String, y: String) = t("$h of non-productive screen time in this period · $y per year at this pace",
+        "$h de tela não produtiva neste período · $y por ano nesse ritmo")
     fun inAYear(a: String) = t("In a year: $a", "Em um ano: $a")
     val estimatesNote = t("Rough estimates to give perspective.", "Estimativas aproximadas, só para dar perspectiva.")
 
@@ -257,7 +257,7 @@ class Strings(val pt: Boolean) {
     fun etaWeeks(w: Int) = t(if (w <= 1) "Done in ~1 week at this pace" else "~$w weeks at this pace", if (w <= 1) "~1 semana nesse ritmo" else "~$w semanas nesse ritmo")
     val etaUnknown = t("Log time to see your ETA", "Registre tempo para ver a previsão")
     fun thisWeekHours(h: String) = t("+$h this week", "+$h nesta semana")
-    val lostThisYear = t("Distracting time this year", "Tempo em distração este ano")
+    val lostThisYear = t("Non-productive screen time this year", "Tela não produtiva este ano")
     fun projectedYear(h: String) = t("At your current pace: $h per year", "No ritmo atual: $h por ano")
     val thatCouldBe = t("Each year, that could be:", "Por ano, isso poderia ser:")
 
@@ -306,7 +306,28 @@ class Strings(val pt: Boolean) {
     val permSitesSub = t("Websites, block screens, pause", "Sites, telas de bloqueio, pausa")
     val permNotif = t("Notifications", "Notificações")
     val permNotifSub = t("Alerts, summaries and reminders", "Alertas, resumos e lembretes")
+    val permOverlay = t("Display over other apps", "Sobrepor a outros apps")
+    val permOverlaySub = t("Blocking without accessibility", "Bloqueio sem acessibilidade")
     val notifications = t("Notifications", "Notificações")
+    val setupTitle = t("Turn on sites & blocking", "Ativar sites e bloqueio")
+    val setupIntro = t("Android protects accessibility for apps installed outside the Play Store, so it needs one extra step. Choose one option:",
+        "O Android protege a acessibilidade de apps instalados fora da Play Store, por isso precisa de um passo extra. Escolha uma opção:")
+    val recommended = t("Recommended · websites + blocking", "Recomendado · sites + bloqueio")
+    val setupA11yTitle = t("Accessibility", "Acessibilidade")
+    val setupA11yBody = t("Tracks time per website in your browser and blocks apps and sites instantly.",
+        "Conta o tempo por site no navegador e bloqueia apps e sites na hora.")
+    val setupStep1 = t("Tap “Open accessibility” → Installed apps → Rumo → turn it on. If Android shows “Restricted setting”, tap OK.",
+        "Toque em “Abrir acessibilidade” → Apps instalados → Rumo → ative. Se o Android mostrar “Configuração restrita”, toque em OK.")
+    val setupStep2 = t("Tap “Open app info” → menu ⋮ (top right) → “Allow restricted settings” and confirm.",
+        "Toque em “Abrir informações do app” → menu ⋮ (canto superior direito) → “Permitir configurações restritas” e confirme.")
+    val setupStep3 = t("Go back to accessibility and turn Rumo on again — now it works.",
+        "Volte à acessibilidade e ative o Rumo de novo — agora funciona.")
+    val openAccessibility = t("Open accessibility", "Abrir acessibilidade")
+    val openAppInfo = t("Open app info", "Abrir informações do app")
+    val setupOverlayTitle = t("Blocking only (simpler)", "Só bloqueio (mais simples)")
+    val setupOverlayBody = t("Uses “Display over other apps” to show the block and pause screens. No restricted setting needed, but websites aren't tracked.",
+        "Usa “Sobrepor a outros apps” para mostrar as telas de bloqueio e pausa. Não precisa de configuração restrita, mas não rastreia sites.")
+    val allowOverlay = t("Allow display over apps", "Permitir sobrepor apps")
     val nLimits = t("Limit alerts", "Alertas de limite")
     val nLimitsSub = t("At 80% and when a limit is reached", "Em 80% e ao atingir um limite")
     val nNudges = t("Gentle nudges", "Lembretes gentis")
@@ -441,6 +462,8 @@ class Strings(val pt: Boolean) {
     }
     val nBedtimeT = t("Time to wind down", "Hora de desacelerar")
     val nBedtimeB = t("Put the phone away for better sleep. See you tomorrow!", "Deixe o celular de lado para dormir melhor. Até amanhã!")
+    val blockerT = t("Rumo blocking is on", "Bloqueio do Rumo ativo")
+    val blockerB = t("Watching for apps you chose to limit. Data stays on this phone.", "De olho nos apps que você escolheu limitar. Os dados ficam neste celular.")
     val nFocusDoneT = t("Focus session complete 🎉", "Sessão de foco concluída 🎉")
     fun nFocusDoneB(m: Int) = t("$m minutes of deep focus. Your apps are unlocked.", "$m minutos de foco profundo. Seus apps foram liberados.")
 }

@@ -81,6 +81,7 @@ class Nav(
     val goTab: (Tab) -> Unit,
     val refresh: () -> Unit,
     val tick: Int,
+    val setupBlocking: () -> Unit = {},
 )
 
 val LocalNav = staticCompositionLocalOf<Nav> { error("no nav") }
@@ -108,6 +109,7 @@ fun RumoRoot(resumeTick: Int, startTab: Tab? = null) {
     val stack = remember { mutableStateListOf<Dest>() }
     var refresh by remember { mutableIntStateOf(0) }
     var forward by remember { mutableStateOf(true) }
+    var showSetup by remember { mutableStateOf(false) }
 
     LaunchedEffect(resumeTick, refresh) {
         withContext(Dispatchers.IO) { runCatching { Collector.sync(context, full = refresh == 0 && resumeTick <= 1) } }
@@ -120,9 +122,11 @@ fun RumoRoot(resumeTick: Int, startTab: Tab? = null) {
         goTab = { stack.clear(); tab = it },
         refresh = { refresh++ },
         tick = resumeTick * 1000 + refresh,
+        setupBlocking = { showSetup = true },
     )
 
     CompositionLocalProvider(LocalNav provides nav) {
+        if (showSetup) io.github.filipembcruz.rumo.ui.screens.BlockingSetupSheet(onDismiss = { showSetup = false; refresh++ })
         if (!onboarded) {
             OnboardingRoute(onDone = { prefs.onboarded = true; onboarded = true; refresh++ })
             return@CompositionLocalProvider
