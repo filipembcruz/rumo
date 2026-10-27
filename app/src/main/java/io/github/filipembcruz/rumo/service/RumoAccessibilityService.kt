@@ -30,6 +30,8 @@ class RumoAccessibilityService : AccessibilityService() {
     private val main = Handler(Looper.getMainLooper())
 
     @Volatile private var current: String? = null
+    private val awayFrom = HashMap<String, Long>()
+    private var lastOpening = false
     @Volatile private var domain: String? = null
     private var domainFlushedAt = 0L
     private var lastUrlCheck = 0L
@@ -42,7 +44,7 @@ class RumoAccessibilityService : AccessibilityService() {
         override fun onReceive(context: Context, intent: Intent) {
             bg.post {
                 when (intent.action) {
-                    Intent.ACTION_SCREEN_OFF -> { screenOn = false; closeWeb(); current = null; distractingSince = 0 }
+                    Intent.ACTION_SCREEN_OFF -> { screenOn = false; closeWeb(); current?.let { awayFrom[it] = System.currentTimeMillis() }; current = null; distractingSince = 0 }
                     Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> screenOn = true
                 }
             }
@@ -133,6 +135,16 @@ class RumoAccessibilityService : AccessibilityService() {
     private fun onWindow(pkg: String) {
         if (pkg in imes || pkg == "com.android.systemui") return
         if (pkg == current) return
+        val now = System.currentTimeMillis()
+        // Mindful pause session: leaving the app (to anything but Rumo's own pause screen) starts
+        // the "away" clock; coming back within AWAY_MS is the same session, not a new opening.
+        val prev = current
+        if (prev != null && prev != packageName && pkg != packageName) awayFrom[prev] = now
+        val awaySince = awayFrom[pkg]
+        val opening = pkg != packageName && pkg != passedPkg.let { if (it == pkg && (awaySince == null || now - awaySince < AWAY_MS)) pkg else null }
+        if (pkg != packageName && opening) passedPkg = null
+        if (pkg != packageName) awayFrom.remove(pkg)
+        lastOpening = opening
         if (current != null && Browsers.isSupported(current!!)) closeWeb()
         current = pkg
         screenOn = true
@@ -140,7 +152,7 @@ class RumoAccessibilityService : AccessibilityService() {
         val cat = Categorizer.app(this, pkg)
         if (!cat.distracting) distractingSince = 0 else if (distractingSince == 0L) distractingSince = System.currentTimeMillis()
         if (Browsers.isSupported(pkg)) onBrowserContent(pkg, force = true)
-        check(pkg, if (Browsers.isSupported(pkg)) domain else null)
+        check(pkg, if (Browsers.isSupported(pkg)) domain else null, opening = lastOpening)
     }
 
     private fun onBrowserContent(pkg: String, force: Boolean = false) {
@@ -195,10 +207,10 @@ class RumoAccessibilityService : AccessibilityService() {
         return Db.get(this).webTotals(key, key).associate { it.first to it.second }
     }
 
-    private fun check(pkg: String, d: String?) {
+    private fun check(pkg: String, d: String?, opening: Boolean = false) {
         if (Rules.isSafe(this, pkg)) return
         val apps = Collector.todayLive(this)
-        val decision = Rules.evaluate(this, pkg, d, apps, siteToday()) ?: return
+        val decision = Rules.evaluate(this, pkg, d, apps, siteToday(), opening = opening) ?: return
         main.post { Interventions.launch(this, decision, pkg) }
     }
 
@@ -250,6 +262,10 @@ class RumoAccessibilityService : AccessibilityService() {
     companion object {
         private const val TICK_MS = 20_000L
         private const val POLL_MS = 1_500L
+        /** Leaving an app for less than this (notification shade, quick switch) doesn't count as a new opening. */
+        private const val AWAY_MS = 60_000L
         @Volatile var running = false
+        /** App the user chose to continue into from the mindful pause, for the current session. */
+        @Volatile var passedPkg: String? = null
     }
 }

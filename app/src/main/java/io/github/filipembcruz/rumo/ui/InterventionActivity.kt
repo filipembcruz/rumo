@@ -102,6 +102,7 @@ class InterventionActivity : ComponentActivity() {
                         onHome = { goHome() },
                         onContinue = {
                             prefs.grantPass("pause:$pkg", System.currentTimeMillis() + 10 * 60_000L)
+                            io.github.filipembcruz.rumo.service.RumoAccessibilityService.passedPkg = pkg
                             packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                             finish()
                         },

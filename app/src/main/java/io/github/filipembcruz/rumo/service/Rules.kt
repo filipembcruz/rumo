@@ -58,6 +58,8 @@ object Rules {
         domain: String?,
         appToday: Map<String, Long>,
         siteToday: Map<String, Long>,
+        /** True only when the app was just opened (not while it stays in front). */
+        opening: Boolean = true,
     ): Decision? {
         if (isSafe(context, pkg)) return null
         val prefs = Prefs.get(context)
@@ -97,7 +99,8 @@ object Rules {
             }
         }
         // 4. mindful pause
-        if (pkg in db.pauseApps() && prefs.passUntil("pause:$pkg") < now) return Decision(BlockReason.PAUSE, TargetKind.APP, pkg)
+        // Only when the app is opened, never while the user keeps using it.
+        if (opening && pkg in db.pauseApps() && prefs.passUntil("pause:$pkg") < now) return Decision(BlockReason.PAUSE, TargetKind.APP, pkg)
         return null
     }
 

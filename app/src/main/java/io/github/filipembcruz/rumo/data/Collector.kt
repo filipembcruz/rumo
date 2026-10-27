@@ -159,7 +159,9 @@ object Collector {
                         apps.getOrPut(pkg) { AppDay() }.opens++
                         if (firstUse == 0L) firstUse = ts
                     }
-                    lastForeground = pkg
+                    // Rumo's own pause/block screen and the system UI don't end a session,
+                    // so coming back from them is not a new "open".
+                    if (pkg != context.packageName && pkg != "com.android.systemui" && pkg != "android") lastForeground = pkg
                 }
                 PAUSED -> if (current == event.packageName) close(ts)
                 SCREEN_OFF, SHUTDOWN -> {
